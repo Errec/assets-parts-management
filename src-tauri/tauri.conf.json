@@ -7,7 +7,7 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "tauri-react-tailwind-boilerplate",
+    "productName": "assets-parts-management",
     "version": "0.1.0"
   },
   "tauri": {
@@ -22,13 +22,7 @@
         "depends": []
       },
       "externalBin": [],
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
+      "icon": [],
       "identifier": "com.example.tauri",
       "longDescription": "",
       "macOS": {
@@ -58,7 +52,7 @@
         "fullscreen": false,
         "height": 600,
         "resizable": true,
-        "title": "tauri-react-tailwind-boilerplate",
+        "title": "Asset Management",
         "width": 800
       }
     ]
