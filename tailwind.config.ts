@@ -7,15 +7,15 @@ export default {
     theme: {
       extend: {
         colors: {
-          'custom': {
+          'tractian': {
             'blue': {
                 100: '#55A6FF',
                 200: '#2188FF',
                 300: '#023B78',
                 400: '#17192D',
             },
-            'custom-green':'#52C41A',
-            'custom-red':'#ED3833',
+            'tractian-green':'#52C41A',
+            'tractian-red':'#ED3833',
           },
       },
     },
