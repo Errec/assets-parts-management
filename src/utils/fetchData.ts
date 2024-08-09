@@ -1,6 +1,6 @@
 import { fetch as tauriFetch } from '@tauri-apps/api/http';
 import { z } from 'zod';
-import { handleError } from '../utils/errorHandler';
+import { handleError } from './errorHandler';
 
 const API_BASE_URL = 'https://fake-api.tractian.com';
 
@@ -18,7 +18,12 @@ export const fetchData = async <T>({ endpoint, schema }: FetchOptions): Promise<
       throw new Error('Invalid data received from the API');
     }
 
-    return schema.parse(data);
+    try {
+      return schema.parse(data);
+    } catch (parseError) {
+      console.error('Schema validation error:', parseError);
+      throw new Error('Data validation failed');
+    }
   } catch (error) {
     handleError(error);
     throw error;
