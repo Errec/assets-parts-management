@@ -1,4 +1,3 @@
-// assetState.ts
 import { Asset, assetSchema } from './asset';
 import { Location, locationSchema } from './location';
 
