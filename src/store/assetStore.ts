@@ -1,8 +1,18 @@
+import { z } from 'zod';
 import { create } from 'zustand';
 import { fetchCompaniesData, fetchCompanyAssetsData, fetchCompanyLocationsData } from '../services/apiService';
-import { Asset } from '../types/asset';
-import { AssetState } from '../types/assetState';
-import { Location } from '../types/location';
+import { Asset, assetSchema } from '../types/asset';
+import { Location, locationSchema } from '../types/location';
+
+export type AssetState = {
+  assets: Asset[];
+  locations: Location[];
+  loading: boolean;
+  error: string | null;
+  fetchAndStoreData: () => Promise<void>;
+  setAssets: (assets: Asset[]) => void;
+  setLocations: (locations: Location[]) => void;
+};
 
 export const useAssetStore = create<AssetState>((set) => ({
   assets: [],
@@ -12,7 +22,6 @@ export const useAssetStore = create<AssetState>((set) => ({
   fetchAndStoreData: async () => {
     try {
       const companies = await fetchCompaniesData() as { id: string }[];
-
       let allLocations: Location[] = [];
       let allAssets: Asset[] = [];
 
@@ -20,25 +29,23 @@ export const useAssetStore = create<AssetState>((set) => ({
         const locations = await fetchCompanyLocationsData(company.id) as Location[];
         const assets = await fetchCompanyAssetsData(company.id) as Asset[];
 
-        allLocations = [...allLocations, ...locations];
-        allAssets = [...allAssets, ...assets];
+        // Validate data using Zod schemas
+        const validatedLocations = locations.map(location => locationSchema.parse(location));
+        const validatedAssets = assets.map(asset => assetSchema.parse(asset));
+
+        allLocations = [...allLocations, ...validatedLocations];
+        allAssets = [...allAssets, ...validatedAssets];
       }
 
-      set((state) => ({
-        ...state,
-        assets: allAssets,
-        locations: allLocations,
-        loading: false,
-        error: null,
-      }));
+      set({ assets: allAssets, locations: allLocations, loading: false, error: null });
     } catch (error) {
-      set((state) => ({
-        ...state,
-        loading: false,
-        error: 'Failed to fetch data',
-      }));
+      if (error instanceof z.ZodError) {
+        set({ loading: false, error: `Validation error: ${error.errors.map(e => e.message).join(', ')}` });
+      } else {
+        set({ loading: false, error: 'Failed to fetch data' });
+      }
     }
   },
-  setAssets: (assets) => set((state) => ({ ...state, assets })),
-  setLocations: (locations) => set((state) => ({ ...state, locations })),
+  setAssets: (assets) => set({ assets }),
+  setLocations: (locations) => set({ locations }),
 }));
