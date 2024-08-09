@@ -1,14 +1,9 @@
-import React, { Suspense, lazy } from 'react';
+import React, { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import ErrorBoundary from './components/ui/ErrorBoundary';
-import { useFetchCompanies } from './hooks/useFetchData';
+import { useAssetStore } from './store';
 
 const queryClient = new QueryClient();
-
-const getErrorMessage = (error: unknown) => {
-  if (error instanceof Error) return error.message;
-  return String(error);
-};
 
 const LoadingSpinner: React.FC = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -19,19 +14,30 @@ const LoadingSpinner: React.FC = () => (
 );
 
 const App: React.FC = () => {
-  const { data: companies, error: companyError, isLoading: companyLoading } = useFetchCompanies();
+  const { fetchAndStoreData, loading, locations, error } = useAssetStore();
 
-  if (companyLoading) return <div>Loading...</div>;
-  if (companyError) return <div>Error: {getErrorMessage(companyError)}</div>;
+  useEffect(() => {
+    fetchAndStoreData();
+  }, [fetchAndStoreData]);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <div className="p-4">
-          <h1 className="text-3xl font-bold">Companies</h1>
-          <pre className="bg-gray-100 p-4 rounded">{JSON.stringify(companies, null, 2)}</pre>
-          <Suspense fallback={<LoadingSpinner />}>
-          </Suspense>
+          <h1 className="text-3xl font-bold">Company Locations</h1>
+          <ul className="list-disc pl-6">
+            {locations.map((location) => (
+              <li key={location.id}>{location.name}</li>
+            ))}
+          </ul>
         </div>
       </ErrorBoundary>
     </QueryClientProvider>
