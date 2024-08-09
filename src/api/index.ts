@@ -12,13 +12,16 @@ type FetchOptions = {
 
 const fetchData = async <T>({ endpoint, schema }: FetchOptions): Promise<T> => {
   try {
-    console.log('Fetching data from:', `${API_BASE_URL}${endpoint}`);
-    // Try using tauriFetch first
     const response = await tauriFetch(`${API_BASE_URL}${endpoint}`);
     const data = await response.data;
+
+    // Check if data is undefined or not an array (for this specific case)
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid data received from the API');
+    }
+
     return schema.parse(data);
   } catch (error) {
-    console.error('Error with tauriFetch:', error);
     handleError(error);
     throw error;
   }
