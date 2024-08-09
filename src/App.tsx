@@ -33,11 +33,15 @@ const App: React.FC = () => {
       <ErrorBoundary>
         <div className="p-4">
           <h1 className="text-3xl font-bold">Company Locations</h1>
-          <ul className="list-disc pl-6">
-            {locations.map((location) => (
-              <li key={location.id}>{location.name}</li>
-            ))}
-          </ul>
+          {locations && locations.length > 0 ? (
+            <ul className="list-disc pl-6">
+              {locations.map((location) => (
+                <li key={location.id}>{location.name}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>No locations available</p>
+          )}
         </div>
       </ErrorBoundary>
     </QueryClientProvider>
