@@ -11,8 +11,10 @@ const Button: React.FC<ButtonProps> = ({ icon, title, onClick, isSelected }) => 
   return (
     <button 
       onClick={onClick} 
-      className={`flex items-center p-1.5 px-2 text-sm text-white ${
-        isSelected ? 'bg-dark-blue-600' : 'bg-blue-500 hover:bg-blue-600'
+      className={`flex items-center p-1.5 px-2 text-sm rounded-md ${
+        isSelected 
+          ? 'bg-blue-600 text-white' 
+          : 'bg-transparent border border-blue-500 text-blue-500 hover:bg-blue-600 hover:text-white'
       }`}
       aria-label={title}
       style={{ cursor: 'pointer' }}

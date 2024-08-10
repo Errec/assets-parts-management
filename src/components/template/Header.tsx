@@ -31,8 +31,8 @@ const Header: React.FC<HeaderProps> = ({ onSelectCompany, selectedCompanyId }) =
         {companies.map((company) => (
           <Button 
             key={company.id} 
-            icon={<img src={goldIcon} alt="Company Icon" className="h-5 w-5" />} 
-            title={company.name  + ' Unit'} 
+            icon={<img src={goldIcon} alt={`${company.name} Icon`} className="h-5 w-5" />} 
+            title={company.name + ' Unit'} 
             onClick={() => handleCompanyClick(company.id)}
             isSelected={selectedCompanyId === company.id}
           />
