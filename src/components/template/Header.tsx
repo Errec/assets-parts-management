@@ -4,7 +4,12 @@ import tractianLogo from '../../assets/imgs/tractian-logo.png';
 import { useCompanyStore } from '../../store';
 import Button from '../ui/Button';
 
-const Header: React.FC = () => {
+type HeaderProps = {
+    onSelectCompany: (companyName: string) => void;
+    selectedCompanyName: string | null;
+};
+
+const Header: React.FC<HeaderProps> = ({ onSelectCompany, selectedCompanyName }) => {
     const { companies, fetchCompanies } = useCompanyStore();
 
     useEffect(() => {
@@ -18,8 +23,10 @@ const Header: React.FC = () => {
                 {companies.map(company => (
                     <Button 
                         key={company.id} 
-                        icon={<img src={goldIcon} alt="Gold Icon" className="h-5 w-5" />} 
+                        icon={<img src={goldIcon} alt="Company Icon" className="h-5 w-5" />} 
                         title={company.name} 
+                        onClick={() => onSelectCompany(company.name)}
+                        isSelected={selectedCompanyName === company.name}
                     />
                 ))}
             </nav>
