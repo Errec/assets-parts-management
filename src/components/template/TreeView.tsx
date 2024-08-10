@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
-import InfiniteLoader from 'react-window-infinite-loader';
 import { useAssetStore } from '../../store/assetStore';
 import { useLocationStore } from '../../store/locationStore';
 import { Asset, Location } from '../../types';
 
+// Define the TreeNodeProps interface
 interface TreeNodeProps {
   name: string;
   type: 'location' | 'asset' | 'component';
@@ -16,6 +16,7 @@ interface TreeNodeProps {
   status?: string;
 }
 
+// Define the TreeNode component
 const TreeNode: React.FC<TreeNodeProps> = ({ name, type, isOpen, onClick, hasChildren, level, sensorType, status }) => {
   const getIcon = () => {
     if (type === 'location') return isOpen ? '📂' : '📁';
@@ -44,10 +45,12 @@ const TreeNode: React.FC<TreeNodeProps> = ({ name, type, isOpen, onClick, hasChi
   );
 };
 
+// Define the TreeViewProps interface
 interface TreeViewProps {
   companyId: string;
 }
 
+// Define the TreeView component
 const TreeView: React.FC<TreeViewProps> = ({ companyId }) => {
   const { assetsByCompany, fetchAssets } = useAssetStore();
   const { locationsByCompany, fetchLocations } = useLocationStore();
@@ -109,12 +112,6 @@ const TreeView: React.FC<TreeViewProps> = ({ companyId }) => {
     return flattened;
   }, [assetsByCompany, locationsByCompany, companyId, openFolders]);
 
-  const isItemLoaded = useCallback((index: number) => index < flattenedTree.length, [flattenedTree]);
-
-  const loadMoreItems = useCallback((startIndex: number, stopIndex: number) => {
-    return Promise.resolve();
-  }, []);
-
   const Row = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const item = flattenedTree[index];
@@ -145,24 +142,14 @@ const TreeView: React.FC<TreeViewProps> = ({ companyId }) => {
   }
 
   return (
-    <InfiniteLoader
-      isItemLoaded={isItemLoaded}
+    <List
+      height={600}
       itemCount={flattenedTree.length}
-      loadMoreItems={loadMoreItems}
+      itemSize={30}
+      width="100%"
     >
-      {({ onItemsRendered, ref }) => (
-        <List
-          height={600}
-          itemCount={flattenedTree.length}
-          itemSize={30}
-          width="100%"
-          onItemsRendered={onItemsRendered}
-          ref={ref}
-        >
-          {Row}
-        </List>
-      )}
-    </InfiniteLoader>
+      {Row}
+    </List>
   );
 };
 
