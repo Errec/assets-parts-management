@@ -18,7 +18,7 @@ const Button: React.FC<ButtonProps> = ({ icon, title, onClick, isSelected }) => 
       style={{ cursor: 'pointer' }}
     >
       {icon && <span className="mr-2">{icon}</span>}
-      {title + ' Unit'}
+      {title}
     </button>
   );
 };

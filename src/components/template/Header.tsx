@@ -25,14 +25,14 @@ const Header: React.FC<HeaderProps> = ({ onSelectCompany, selectedCompanyId }) =
   };
 
   return (
-    <header className="fixed top-0 w-full h-12 bg-gray-800 text-white flex justify-between items-center px-4">
+    <header className="fixed z-50 top-0 w-full h-12 bg-gray-800 text-white flex justify-between items-center px-4">
       <img src={tractianLogo} alt="Tractian Logo" className="h-3.5" />
       <nav className="flex space-x-4">
         {companies.map((company) => (
           <Button 
             key={company.id} 
             icon={<img src={goldIcon} alt="Company Icon" className="h-5 w-5" />} 
-            title={company.name} 
+            title={company.name  + ' Unit'} 
             onClick={() => handleCompanyClick(company.id)}
             isSelected={selectedCompanyId === company.id}
           />

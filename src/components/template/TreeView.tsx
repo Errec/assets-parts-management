@@ -46,35 +46,39 @@ const TreeNode: React.FC<TreeNodeProps> = ({ name, type, isOpen, onClick, hasChi
 
 // Define the TreeViewProps type
 type TreeViewProps = {
-  companyId: string;
+  selectedCompanyId: string | null;
 }
 
 // Define the TreeView component
-const TreeView: React.FC<TreeViewProps> = ({ companyId }) => {
+const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId }) => {
   const { assetsByCompany, fetchAssets } = useAssetStore();
   const { locationsByCompany, fetchLocations } = useLocationStore();
   const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>({});
   const [flattenedTree, setFlattenedTree] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchAssets(companyId);
-    fetchLocations(companyId);
-  }, [companyId, fetchAssets, fetchLocations]);
+    if (selectedCompanyId) {
+      fetchAssets(selectedCompanyId);
+      fetchLocations(selectedCompanyId);
+    }
+  }, [selectedCompanyId, fetchAssets, fetchLocations]);
 
   useEffect(() => {
-    if (assetsByCompany[companyId] && locationsByCompany[companyId]) {
+    if (selectedCompanyId && assetsByCompany[selectedCompanyId] && locationsByCompany[selectedCompanyId]) {
       const flattened = flattenTree();
       setFlattenedTree(flattened);
     }
-  }, [assetsByCompany, locationsByCompany, companyId, openFolders]);
+  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders]);
 
   const toggleFolder = useCallback((id: string) => {
     setOpenFolders((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
   const flattenTree = useCallback(() => {
-    const locations: Location[] = locationsByCompany[companyId] || [];
-    const assets: Asset[] = assetsByCompany[companyId] || [];
+    if (!selectedCompanyId) return [];
+
+    const locations: Location[] = locationsByCompany[selectedCompanyId] || [];
+    const assets: Asset[] = assetsByCompany[selectedCompanyId] || [];
     const flattened: any[] = [];
 
     const addAsset = (asset: Asset, level: number) => {
@@ -109,7 +113,7 @@ const TreeView: React.FC<TreeViewProps> = ({ companyId }) => {
       .forEach((asset: Asset) => addAsset(asset, 0));
 
     return flattened;
-  }, [assetsByCompany, locationsByCompany, companyId, openFolders]);
+  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders]);
 
   const Row = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
@@ -136,7 +140,7 @@ const TreeView: React.FC<TreeViewProps> = ({ companyId }) => {
     [flattenedTree, openFolders, toggleFolder]
   );
 
-  if (!assetsByCompany[companyId] || !locationsByCompany[companyId]) {
+  if (!selectedCompanyId || !assetsByCompany[selectedCompanyId] || !locationsByCompany[selectedCompanyId]) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
