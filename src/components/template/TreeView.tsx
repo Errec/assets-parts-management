@@ -4,8 +4,7 @@ import { useAssetStore } from '../../store/assetStore';
 import { useLocationStore } from '../../store/locationStore';
 import { Asset, Location } from '../../types';
 
-// Define the TreeNodeProps interface
-interface TreeNodeProps {
+type TreeNodeProps = {
   name: string;
   type: 'location' | 'asset' | 'component';
   isOpen: boolean;
@@ -45,8 +44,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({ name, type, isOpen, onClick, hasChi
   );
 };
 
-// Define the TreeViewProps interface
-interface TreeViewProps {
+// Define the TreeViewProps type
+type TreeViewProps = {
   companyId: string;
 }
 
