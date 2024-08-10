@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import Header from './components/template/Header';
 import ErrorBoundary from './components/ui/ErrorBoundary';
-import { useAssetStore } from './store';
+import { useCompanyStore } from './store/companyStore';
 
 const queryClient = new QueryClient();
 
@@ -14,11 +15,11 @@ const LoadingSpinner: React.FC = () => (
 );
 
 const App: React.FC = () => {
-  const { fetchAndStoreData, loading, locations, error } = useAssetStore();
+  const { fetchCompanies, companies, loading, error } = useCompanyStore();
 
   useEffect(() => {
-    fetchAndStoreData();
-  }, [fetchAndStoreData]);
+    fetchCompanies();
+  }, [fetchCompanies]);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -31,21 +32,18 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <div className="p-4">
-          <h1 className="text-3xl font-bold">Company Locations</h1>
-          {locations && locations.length > 0 ? (
-            <ul className="list-disc pl-6">
-              {locations.map((location) => (
-                <li key={location.id}>{location.name}</li>
-              ))}
-            </ul>
+        <Header />
+        <main className="p-4">
+          {companies.length > 0 ? (
+            <p>{companies[0].name}</p>
           ) : (
-            <p>No locations available</p>
+            <p>No companies available</p>
           )}
-        </div>
+        </main>
       </ErrorBoundary>
     </QueryClientProvider>
   );
 };
 
 export default App;
+
