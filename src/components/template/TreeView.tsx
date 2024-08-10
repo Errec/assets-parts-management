@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAssetStore } from '../../store/assetStore';
+import { useLocationStore } from '../../store/locationStore';
 import { Asset, Location } from '../../types';
 
 interface TreeNodeProps {
@@ -36,73 +37,81 @@ interface TreeViewProps {
 }
 
 const TreeView: React.FC<TreeViewProps> = ({ companyId }) => {
-  const { assetsByCompany, locationsByCompany, fetchAssetsAndLocations, loading } = useAssetStore();
+  const { assetsByCompany, fetchAssets } = useAssetStore();
+  const { locationsByCompany, fetchLocations } = useLocationStore();
   const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
-    fetchAssetsAndLocations(companyId);
-  }, [companyId, fetchAssetsAndLocations]);
+    fetchAssets(companyId);
+    fetchLocations(companyId);
+  }, [companyId, fetchAssets, fetchLocations]);
 
   const toggleFolder = (id: string) => {
     setOpenFolders((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const renderTree = (locationId: string | null = null) => {
-    const locations = locationsByCompany[companyId];
-    const assets = assetsByCompany[companyId];
+    const locations: Location[] = locationsByCompany[companyId] || [];
+    const assets: Asset[] = assetsByCompany[companyId] || [];
 
-    return locations?.filter((location) => location.parentId === locationId).map((location) => {
-      const childAssets = assets?.filter((asset) => asset.locationId === location.id && !asset.parentId);
-      const hasChildren = childAssets?.length > 0 || locations?.some(l => l.parentId === location.id);
+    return locations
+      .filter((location: Location) => location.parentId === locationId)
+      .map((location: Location) => {
+        const childAssets = assets.filter((asset: Asset) => asset.locationId === location.id && !asset.parentId);
+        const hasChildren = childAssets.length > 0 || locations.some((l: Location) => l.parentId === location.id);
 
-      return (
-        <TreeNode
-          key={location.id}
-          name={location.name}
-          isFolder={true}
-          isOpen={!!openFolders[location.id]}
-          onClick={() => toggleFolder(location.id)}
-          hasChildren={hasChildren}
-        >
-          {childAssets?.map((asset) => (
-            <TreeNode
-              key={asset.id}
-              name={asset.name}
-              isFolder={assets.some(subAsset => subAsset.parentId === asset.id)}
-              isOpen={!!openFolders[asset.id]}
-              onClick={() => toggleFolder(asset.id)}
-              hasChildren={assets.some(subAsset => subAsset.parentId === asset.id)}
-            >
-              {assets?.filter((subAsset) => subAsset.parentId === asset.id).map((subAsset) => (
-                <TreeNode
-                  key={subAsset.id}
-                  name={subAsset.name}
-                  isFolder={assets.some(component => component.parentId === subAsset.id)}
-                  isOpen={!!openFolders[subAsset.id]}
-                  onClick={() => toggleFolder(subAsset.id)}
-                  hasChildren={assets.some(component => component.parentId === subAsset.id)}
-                >
-                  {assets?.filter((component) => component.parentId === subAsset.id).map((component) => (
+        return (
+          <TreeNode
+            key={location.id}
+            name={location.name}
+            isFolder={true}
+            isOpen={!!openFolders[location.id]}
+            onClick={() => toggleFolder(location.id)}
+            hasChildren={hasChildren}
+          >
+            {childAssets.map((asset: Asset) => (
+              <TreeNode
+                key={asset.id}
+                name={asset.name}
+                isFolder={assets.some((subAsset: Asset) => subAsset.parentId === asset.id)}
+                isOpen={!!openFolders[asset.id]}
+                onClick={() => toggleFolder(asset.id)}
+                hasChildren={assets.some((subAsset: Asset) => subAsset.parentId === asset.id)}
+              >
+                {assets
+                  .filter((subAsset: Asset) => subAsset.parentId === asset.id)
+                  .map((subAsset: Asset) => (
                     <TreeNode
-                      key={component.id}
-                      name={component.name}
-                      isFolder={false}
-                      isOpen={false}
-                      onClick={() => {}}
-                      hasChildren={false}
-                    />
+                      key={subAsset.id}
+                      name={subAsset.name}
+                      isFolder={assets.some((component: Asset) => component.parentId === subAsset.id)}
+                      isOpen={!!openFolders[subAsset.id]}
+                      onClick={() => toggleFolder(subAsset.id)}
+                      hasChildren={assets.some((component: Asset) => component.parentId === subAsset.id)}
+                    >
+                      {assets
+                        .filter((component: Asset) => component.parentId === subAsset.id)
+                        .map((component: Asset) => (
+                          <TreeNode
+                            key={component.id}
+                            name={component.name}
+                            isFolder={false}
+                            isOpen={false}
+                            onClick={() => {}}
+                            hasChildren={false}
+                          />
+                        ))}
+                    </TreeNode>
                   ))}
-                </TreeNode>
-              ))}
-            </TreeNode>
-          ))}
-          {renderTree(location.id)}
-        </TreeNode>
-      );
-    });
+              </TreeNode>
+            ))}
+            {renderTree(location.id)}
+          </TreeNode>
+        );
+      });
   };
 
-  if (loading) {
+  if (!assetsByCompany[companyId] || !locationsByCompany[companyId]) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
