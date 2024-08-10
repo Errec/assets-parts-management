@@ -7,14 +7,20 @@ export type AssetState = {
   assetsByCompany: { [companyId: string]: Asset[] };
   loading: boolean;
   error: string | null;
+  filterOperating: boolean; // New state for filtering operating sensors
+  filterCritical: boolean;  // New state for filtering critical sensors
   fetchAssets: (companyId: string) => Promise<void>;
   setAssets: (companyId: string, assets: Asset[]) => void;
+  toggleFilterOperating: () => void; // New action to toggle the operating filter
+  toggleFilterCritical: () => void;  // New action to toggle the critical filter
 };
 
 export const useAssetStore = create<AssetState>((set, get) => ({
   assetsByCompany: {},
   loading: false,
   error: null,
+  filterOperating: false, // Initialize filter state
+  filterCritical: false,  // Initialize filter state
 
   fetchAssets: async (companyId: string) => {
     if (get().assetsByCompany[companyId]) {
@@ -43,4 +49,14 @@ export const useAssetStore = create<AssetState>((set, get) => ({
       assetsByCompany: { ...state.assetsByCompany, [companyId]: validatedAssets }
     }));
   },
+
+  // Action to toggle the operating filter
+  toggleFilterOperating: () => set((state) => ({
+    filterOperating: !state.filterOperating
+  })),
+
+  // Action to toggle the critical filter
+  toggleFilterCritical: () => set((state) => ({
+    filterCritical: !state.filterCritical
+  })),
 }));

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import alertIcon from '../../assets/icons/alert.svg';
 import sensorIcon from '../../assets/icons/sensor.svg';
+import { useAssetStore } from '../../store/assetStore'; // Import Zustand store
 import Button from '../ui/Button';
 
 type HeaderProps = {
@@ -9,6 +10,7 @@ type HeaderProps = {
 
 const Header: React.FC<HeaderProps> = ({ companyName }) => {
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const { toggleFilterOperating, toggleFilterCritical } = useAssetStore(); // Access actions from the store
 
   const handleFilterClick = (selectedFilter: string) => {
     setSelectedFilters(prevFilters =>
@@ -16,6 +18,13 @@ const Header: React.FC<HeaderProps> = ({ companyName }) => {
         ? prevFilters.filter(filter => filter !== selectedFilter)
         : [...prevFilters, selectedFilter]
     );
+
+    // Dispatch actions based on the selected filter
+    if (selectedFilter === 'sensor') {
+      toggleFilterOperating();
+    } else if (selectedFilter === 'alert') {
+      toggleFilterCritical();
+    }
   };
 
   return (

@@ -51,7 +51,7 @@ type TreeViewProps = {
 
 // Define the TreeView component
 const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId }) => {
-  const { assetsByCompany, fetchAssets } = useAssetStore();
+  const { assetsByCompany, fetchAssets, filterOperating, filterCritical } = useAssetStore();
   const { locationsByCompany, fetchLocations } = useLocationStore();
   const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>({});
   const [flattenedTree, setFlattenedTree] = useState<any[]>([]);
@@ -68,7 +68,7 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId }) => {
       const flattened = flattenTree();
       setFlattenedTree(flattened);
     }
-  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders]);
+  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders, filterOperating, filterCritical]);
 
   const toggleFolder = useCallback((id: string) => {
     setOpenFolders((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -82,6 +82,11 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId }) => {
     const flattened: any[] = [];
 
     const addAsset = (asset: Asset, level: number) => {
+      if (
+        (filterOperating && asset.status !== 'operating') ||
+        (filterCritical && asset.status !== 'alert')
+      ) return;
+
       const type = asset.sensorType ? 'component' : 'asset';
       flattened.push({ ...asset, level, type });
       if (openFolders[asset.id]) {
@@ -113,7 +118,7 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId }) => {
       .forEach((asset: Asset) => addAsset(asset, 0));
 
     return flattened;
-  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders]);
+  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders, filterOperating, filterCritical]);
 
   const Row = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
@@ -145,12 +150,7 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId }) => {
   }
 
   return (
-    <List
-      height={600}
-      itemCount={flattenedTree.length}
-      itemSize={30}
-      width="100%"
-    >
+    <List height={600} itemCount={flattenedTree.length} itemSize={30} width="100%">
       {Row}
     </List>
   );
