@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import './App.css';
 import Header from './components/template/Header';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import { useCompanyStore } from './store/companyStore';
