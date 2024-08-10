@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import Header from './components/template/Header';
 import ErrorBoundary from './components/ui/ErrorBoundary';
@@ -16,6 +16,7 @@ const LoadingSpinner: React.FC = () => (
 
 const App: React.FC = () => {
   const { fetchCompanies, companies, loading, error } = useCompanyStore();
+  const [selectedCompanyName, setSelectedCompanyName] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCompanies();
@@ -32,12 +33,12 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <Header />
+        <Header onSelectCompany={setSelectedCompanyName} selectedCompanyName={selectedCompanyName} />
         <main className="p-4">
-          {companies.length > 0 ? (
-            <p>{companies[0].name}</p>
+          {selectedCompanyName ? (
+            <p>{selectedCompanyName}</p>
           ) : (
-            <p>No companies available</p>
+            <p>{companies.length > 0 ? companies[0].name : 'No companies available'}</p>
           )}
         </main>
       </ErrorBoundary>
@@ -46,4 +47,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
