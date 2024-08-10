@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import './App.css';
 import Header from './components/template/Header';
+import TreeView from './components/template/TreeView';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import { useCompanyStore } from './store/companyStore';
 
@@ -23,6 +24,12 @@ const App: React.FC = () => {
     fetchCompanies();
   }, [fetchCompanies]);
 
+  useEffect(() => {
+    if (companies.length > 0 && !selectedCompanyName) {
+      setSelectedCompanyName(companies[0].id); // Automatically select the first company
+    }
+  }, [companies, selectedCompanyName]);
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -34,10 +41,10 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <Header onSelectCompany={setSelectedCompanyName} selectedCompanyName={selectedCompanyName} />
+        <Header onSelectCompany={setSelectedCompanyName} selectedCompanyId={selectedCompanyName} />
         <main className="p-4">
           {selectedCompanyName ? (
-            <p>{selectedCompanyName}</p>
+            <TreeView companyId={selectedCompanyName} />
           ) : (
             <p>{companies.length > 0 ? companies[0].name : 'No companies available'}</p>
           )}

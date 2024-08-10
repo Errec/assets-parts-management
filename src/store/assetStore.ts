@@ -1,51 +1,59 @@
 import { z } from 'zod';
 import { create } from 'zustand';
-import { fetchCompaniesData, fetchCompanyAssetsData, fetchCompanyLocationsData } from '../services/apiService';
+import { fetchCompanyAssetsData, fetchCompanyLocationsData } from '../services/apiService';
 import { Asset, assetSchema } from '../types/asset';
 import { Location, locationSchema } from '../types/location';
 
 export type AssetState = {
-  assets: Asset[];
-  locations: Location[];
+  assetsByCompany: { [companyId: string]: Asset[] };
+  locationsByCompany: { [companyId: string]: Location[] };
   loading: boolean;
   error: string | null;
-  fetchAndStoreData: () => Promise<void>;
-  setAssets: (assets: Asset[]) => void;
-  setLocations: (locations: Location[]) => void;
+  fetchAssetsAndLocations: (companyId: string) => Promise<void>;
+  setAssets: (companyId: string, assets: Asset[]) => void;
+  setLocations: (companyId: string, locations: Location[]) => void;
 };
 
-export const useAssetStore = create<AssetState>((set) => ({
-  assets: [],
-  locations: [],
-  loading: true,
+export const useAssetStore = create<AssetState>((set, get) => ({
+  assetsByCompany: {},
+  locationsByCompany: {},
+  loading: false,
   error: null,
-  fetchAndStoreData: async () => {
+
+  fetchAssetsAndLocations: async (companyId: string) => {
+    if (get().assetsByCompany[companyId] && get().locationsByCompany[companyId]) {
+      return; // Data already exists, no need to fetch again
+    }
+
+    set({ loading: true, error: null });
+
     try {
-      const companies = await fetchCompaniesData() as { id: string }[];
-      let allLocations: Location[] = [];
-      let allAssets: Asset[] = [];
+      const assets = await fetchCompanyAssetsData(companyId) as Asset[];
+      const locations = await fetchCompanyLocationsData(companyId) as Location[];
 
-      for (const company of companies) {
-        const locations = await fetchCompanyLocationsData(company.id) as Location[];
-        const assets = await fetchCompanyAssetsData(company.id) as Asset[];
+      const validatedAssets = assets.map(asset => assetSchema.parse(asset));
+      const validatedLocations = locations.map(location => locationSchema.parse(location));
 
-        // Validate data using Zod schemas
-        const validatedLocations = locations.map(location => locationSchema.parse(location));
-        const validatedAssets = assets.map(asset => assetSchema.parse(asset));
-
-        allLocations = [...allLocations, ...validatedLocations];
-        allAssets = [...allAssets, ...validatedAssets];
-      }
-
-      set({ assets: allAssets, locations: allLocations, loading: false, error: null });
+      set((state) => ({
+        assetsByCompany: { ...state.assetsByCompany, [companyId]: validatedAssets },
+        locationsByCompany: { ...state.locationsByCompany, [companyId]: validatedLocations },
+        loading: false,
+        error: null,
+      }));
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        set({ loading: false, error: `Validation error: ${error.errors.map(e => e.message).join(', ')}` });
-      } else {
-        set({ loading: false, error: 'Failed to fetch data' });
-      }
+      set({ loading: false, error: 'Failed to fetch data' });
     }
   },
-  setAssets: (assets) => set({ assets }),
-  setLocations: (locations) => set({ locations }),
+
+  setAssets: (companyId, assets) => {
+    set((state) => ({
+      assetsByCompany: { ...state.assetsByCompany, [companyId]: assets }
+    }));
+  },
+
+  setLocations: (companyId, locations) => {
+    set((state) => ({
+      locationsByCompany: { ...state.locationsByCompany, [companyId]: locations }
+    }));
+  },
 }));
