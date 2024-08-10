@@ -1,33 +1,45 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { FixedSizeList as List } from 'react-window';
+import InfiniteLoader from 'react-window-infinite-loader';
 import { useAssetStore } from '../../store/assetStore';
 import { useLocationStore } from '../../store/locationStore';
 import { Asset, Location } from '../../types';
 
 interface TreeNodeProps {
   name: string;
-  isFolder: boolean;
+  type: 'location' | 'asset' | 'component';
   isOpen: boolean;
   onClick: () => void;
-  children?: React.ReactNode;
   hasChildren: boolean;
+  level: number;
+  sensorType?: string;
+  status?: string;
 }
 
-const TreeNode: React.FC<TreeNodeProps> = ({ name, isFolder, isOpen, onClick, children, hasChildren }) => {
+const TreeNode: React.FC<TreeNodeProps> = ({ name, type, isOpen, onClick, hasChildren, level, sensorType, status }) => {
+  const getIcon = () => {
+    if (type === 'location') return isOpen ? '📂' : '📁';
+    if (type === 'asset') return '🔧';
+    if (type === 'component') {
+      if (sensorType === 'vibration') return '📳';
+      if (sensorType === 'energy') return '⚡';
+      return '🔌';
+    }
+    return '•';
+  };
+
+  const getStatusDot = () => {
+    if (status === 'operating') return <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>;
+    if (status === 'alert') return <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>;
+    return null;
+  };
+
   return (
-    <div className="ml-4">
-      <div onClick={onClick} className={`cursor-pointer flex items-center ${hasChildren ? '' : 'pl-5'}`}>
-        {isFolder && hasChildren ? (
-          isOpen ? (
-            <span>&#9660;</span> // Arrow down
-          ) : (
-            <span>&#9654;</span> // Arrow right
-          )
-        ) : (
-          <span>&#8226;</span> // Dot
-        )}
-        <span className="ml-2">{name}</span>
-      </div>
-      {isOpen && <div className="ml-4">{children}</div>}
+    <div onClick={onClick} className="cursor-pointer flex items-center" style={{ paddingLeft: `${level * 20}px` }}>
+      {getStatusDot()}
+      <span>{getIcon()}</span>
+      <span className="ml-2">{name}</span>
+      {type === 'component' && sensorType && <span className="ml-2 text-xs text-gray-500">({sensorType})</span>}
     </div>
   );
 };
@@ -40,82 +52,118 @@ const TreeView: React.FC<TreeViewProps> = ({ companyId }) => {
   const { assetsByCompany, fetchAssets } = useAssetStore();
   const { locationsByCompany, fetchLocations } = useLocationStore();
   const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>({});
+  const [flattenedTree, setFlattenedTree] = useState<any[]>([]);
 
   useEffect(() => {
     fetchAssets(companyId);
     fetchLocations(companyId);
   }, [companyId, fetchAssets, fetchLocations]);
 
-  const toggleFolder = (id: string) => {
-    setOpenFolders((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  useEffect(() => {
+    if (assetsByCompany[companyId] && locationsByCompany[companyId]) {
+      const flattened = flattenTree();
+      setFlattenedTree(flattened);
+    }
+  }, [assetsByCompany, locationsByCompany, companyId, openFolders]);
 
-  const renderTree = (locationId: string | null = null) => {
+  const toggleFolder = useCallback((id: string) => {
+    setOpenFolders((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
+
+  const flattenTree = useCallback(() => {
     const locations: Location[] = locationsByCompany[companyId] || [];
     const assets: Asset[] = assetsByCompany[companyId] || [];
+    const flattened: any[] = [];
 
-    return locations
-      .filter((location: Location) => location.parentId === locationId)
-      .map((location: Location) => {
-        const childAssets = assets.filter((asset: Asset) => asset.locationId === location.id && !asset.parentId);
-        const hasChildren = childAssets.length > 0 || locations.some((l: Location) => l.parentId === location.id);
+    const addAsset = (asset: Asset, level: number) => {
+      const type = asset.sensorType ? 'component' : 'asset';
+      flattened.push({ ...asset, level, type });
+      if (openFolders[asset.id]) {
+        assets
+          .filter((subAsset: Asset) => subAsset.parentId === asset.id)
+          .forEach((subAsset: Asset) => addAsset(subAsset, level + 1));
+      }
+    };
 
-        return (
+    const traverse = (locationId: string | null = null, level = 0) => {
+      locations
+        .filter((location: Location) => location.parentId === locationId)
+        .forEach((location: Location) => {
+          flattened.push({ ...location, level, type: 'location' });
+          if (openFolders[location.id]) {
+            assets
+              .filter((asset: Asset) => asset.locationId === location.id && !asset.parentId)
+              .forEach((asset: Asset) => addAsset(asset, level + 1));
+            traverse(location.id, level + 1);
+          }
+        });
+    };
+
+    traverse();
+
+    // Add unlinked assets and components
+    assets
+      .filter((asset: Asset) => !asset.locationId && !asset.parentId)
+      .forEach((asset: Asset) => addAsset(asset, 0));
+
+    return flattened;
+  }, [assetsByCompany, locationsByCompany, companyId, openFolders]);
+
+  const isItemLoaded = useCallback((index: number) => index < flattenedTree.length, [flattenedTree]);
+
+  const loadMoreItems = useCallback((startIndex: number, stopIndex: number) => {
+    return Promise.resolve();
+  }, []);
+
+  const Row = useCallback(
+    ({ index, style }: { index: number; style: React.CSSProperties }) => {
+      const item = flattenedTree[index];
+      if (!item) return null;
+
+      const hasChildren = item.type === 'location' || item.type === 'asset';
+
+      return (
+        <div style={style}>
           <TreeNode
-            key={location.id}
-            name={location.name}
-            isFolder={true}
-            isOpen={!!openFolders[location.id]}
-            onClick={() => toggleFolder(location.id)}
+            name={item.name}
+            type={item.type}
+            isOpen={!!openFolders[item.id]}
+            onClick={() => toggleFolder(item.id)}
             hasChildren={hasChildren}
-          >
-            {childAssets.map((asset: Asset) => (
-              <TreeNode
-                key={asset.id}
-                name={asset.name}
-                isFolder={assets.some((subAsset: Asset) => subAsset.parentId === asset.id)}
-                isOpen={!!openFolders[asset.id]}
-                onClick={() => toggleFolder(asset.id)}
-                hasChildren={assets.some((subAsset: Asset) => subAsset.parentId === asset.id)}
-              >
-                {assets
-                  .filter((subAsset: Asset) => subAsset.parentId === asset.id)
-                  .map((subAsset: Asset) => (
-                    <TreeNode
-                      key={subAsset.id}
-                      name={subAsset.name}
-                      isFolder={assets.some((component: Asset) => component.parentId === subAsset.id)}
-                      isOpen={!!openFolders[subAsset.id]}
-                      onClick={() => toggleFolder(subAsset.id)}
-                      hasChildren={assets.some((component: Asset) => component.parentId === subAsset.id)}
-                    >
-                      {assets
-                        .filter((component: Asset) => component.parentId === subAsset.id)
-                        .map((component: Asset) => (
-                          <TreeNode
-                            key={component.id}
-                            name={component.name}
-                            isFolder={false}
-                            isOpen={false}
-                            onClick={() => {}}
-                            hasChildren={false}
-                          />
-                        ))}
-                    </TreeNode>
-                  ))}
-              </TreeNode>
-            ))}
-            {renderTree(location.id)}
-          </TreeNode>
-        );
-      });
-  };
+            level={item.level}
+            sensorType={item.sensorType}
+            status={item.status}
+          />
+        </div>
+      );
+    },
+    [flattenedTree, openFolders, toggleFolder]
+  );
 
   if (!assetsByCompany[companyId] || !locationsByCompany[companyId]) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  return <div>{renderTree()}</div>;
+  return (
+    <InfiniteLoader
+      isItemLoaded={isItemLoaded}
+      itemCount={flattenedTree.length}
+      loadMoreItems={loadMoreItems}
+    >
+      {({ onItemsRendered, ref }) => (
+        <List
+          height={600}
+          itemCount={flattenedTree.length}
+          itemSize={30}
+          width="100%"
+          onItemsRendered={onItemsRendered}
+          ref={ref}
+        >
+          {Row}
+        </List>
+      )}
+    </InfiniteLoader>
+  );
 };
 
 export default TreeView;
