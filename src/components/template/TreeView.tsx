@@ -232,7 +232,7 @@ const TreeView: React.FC<TreeViewProps> = ({
 
     searchResults.forEach((result) => {
       if ('locationId' in result || 'parentId' in result) {
-        expandedResults.push({ ...result, level: 0, type: result.sensorType ? 'component' : 'asset' });
+        expandedResults.push({ ...result, level: 0, type: 'sensorType' in result ? 'component' : 'asset' });
         if ('parentId' in result) {
           traverse(result.id, 1);
         } else {
@@ -266,7 +266,7 @@ const TreeView: React.FC<TreeViewProps> = ({
         <div style={style}>
           <TreeNode
             name={item.name}
-            type={item.type || (item.sensorType ? 'component' : 'asset')}
+            type={item.type || ('sensorType' in item ? 'component' : 'asset')}
             isOpen={!!openFolders[item.id]}
             onClick={() => {
               toggleFolder(item.id);
@@ -275,7 +275,7 @@ const TreeView: React.FC<TreeViewProps> = ({
             hasChildren={hasChildren}
             level={item.level || 0}
             isSelected={selectedAsset ? selectedAsset.id === item.id : false}
-            sensorType={item.sensorType}
+            sensorType={'sensorType' in item ? item.sensorType : undefined}
             status={item.status}
           />
         </div>
