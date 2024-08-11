@@ -13,6 +13,7 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
   const { companies, fetchCompanies } = useCompanyStore();
   const [companyName, setCompanyName] = useState<string>('');
   const [searchResults, setSearchResults] = useState<(Asset | Location)[]>([]);
+  const [expandAll, setExpandAll] = useState<boolean>(false);
 
   useEffect(() => {
     fetchCompanies();
@@ -26,10 +27,12 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
       setCompanyName('');
     }
     setSearchResults([]); // Clear search results when company changes
+    setExpandAll(false); // Reset expandAll when company changes
   }, [selectedCompanyId, companies]);
 
-  const handleSearch = useCallback((results: (Asset | Location)[]) => {
+  const handleSearch = useCallback((results: (Asset | Location)[], expand: boolean) => {
     setSearchResults(results);
+    setExpandAll(expand);
   }, []);
 
   return (
@@ -44,6 +47,7 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
       <TreeView 
         selectedCompanyId={selectedCompanyId} 
         searchResults={searchResults} 
+        expandAll={expandAll}
       />
     </section>
   );

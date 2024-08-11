@@ -6,13 +6,12 @@ import { Asset, Location } from '../../types';
 
 interface TreeSearchProps {
   selectedCompanyId: string | null;
-  onSearch: (results: (Asset | Location)[]) => void;
+  onSearch: (results: (Asset | Location)[], expandAll: boolean) => void;
 }
 
 const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [previewResults, setPreviewResults] = useState<(Asset | Location)[]>([]);
-  const [selectedPreviewIndex, setSelectedPreviewIndex] = useState(-1);
   const { assetsByCompany } = useAssetStore();
   const { locationsByCompany } = useLocationStore();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -31,12 +30,10 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
 
       const results = [...filteredAssets, ...filteredLocations];
       setPreviewResults(results);
-      onSearch(results);
     } else {
       setPreviewResults([]);
-      onSearch([]);
     }
-  }, [selectedCompanyId, assetsByCompany, locationsByCompany, onSearch]);
+  }, [selectedCompanyId, assetsByCompany, locationsByCompany]);
 
   const debouncedSearch = useCallback(debounce(performSearch, 300), [performSearch]);
 
@@ -50,41 +47,51 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
   useEffect(() => {
     setSearchTerm('');
     setPreviewResults([]);
-    setSelectedPreviewIndex(-1);
   }, [selectedCompanyId]);
 
+  const handleSearchSubmit = () => {
+    if (searchTerm.trim() === '') {
+      onSearch([], false);
+    } else {
+      onSearch(previewResults, false); // Pass search results to be rendered in TreeView
+    }
+    setSearchTerm('');
+    setPreviewResults([]);
+    inputRef.current?.blur();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedPreviewIndex(prev => Math.min(prev + 1, previewResults.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedPreviewIndex(prev => Math.max(prev - 1, -1));
-    } else if (e.key === 'Enter' && selectedPreviewIndex !== -1) {
-      onSearch([previewResults[selectedPreviewIndex]]);
-      inputRef.current?.blur();
+    if (e.key === 'Enter') {
+      handleSearchSubmit();
     }
   };
 
   return (
     <div className="mb-4 relative">
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder="Search assets, components, or locations..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        onKeyDown={handleKeyDown}
-        className="w-full p-2 border border-gray-300 rounded"
-      />
+      <div className="flex items-center">
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder="Search assets, components, or locations..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="w-full p-2 border border-gray-300 rounded"
+        />
+        <button 
+          onClick={handleSearchSubmit} 
+          className="p-2 bg-blue-500 text-white rounded ml-2">
+          🔍
+        </button>
+      </div>
       {previewResults.length > 0 && searchTerm.length >= 3 && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto">
-          {previewResults.map((item, index) => (
+          {previewResults.map((item) => (
             <div
               key={item.id}
-              className={`p-2 hover:bg-gray-100 cursor-pointer ${index === selectedPreviewIndex ? 'bg-blue-100' : ''}`}
+              className="p-2 hover:bg-gray-100 cursor-pointer"
               onClick={() => {
-                onSearch([item]);
+                onSearch([item], false); // Pass selected item to TreeView
                 setSearchTerm('');
                 setPreviewResults([]);
               }}

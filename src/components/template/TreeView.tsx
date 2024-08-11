@@ -46,9 +46,10 @@ const TreeNode: React.FC<TreeNodeProps> = ({ name, type, isOpen, onClick, hasChi
 type TreeViewProps = {
   selectedCompanyId: string | null;
   searchResults: (Asset | Location)[];
+  expandAll: boolean;
 }
 
-const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults }) => {
+const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults, expandAll }) => {
   const { assetsByCompany, fetchAssets, filterOperating, filterCritical } = useAssetStore();
   const { locationsByCompany, fetchLocations } = useLocationStore();
   const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>({});
@@ -63,7 +64,7 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults })
 
   useEffect(() => {
     if (selectedCompanyId && assetsByCompany[selectedCompanyId] && locationsByCompany[selectedCompanyId]) {
-      const flattened = searchResults.length > 0 ? searchResults : flattenTree();
+      const flattened = searchResults.length > 0 ? flattenSearchResults() : flattenTree();
       setFlattenedTree(flattened);
     }
   }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders, filterOperating, filterCritical, searchResults]);
@@ -87,7 +88,7 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults })
 
       const type = asset.sensorType ? 'component' : 'asset';
       flattened.push({ ...asset, level, type });
-      if (openFolders[asset.id]) {
+      if (openFolders[asset.id] || expandAll) {
         assets
           .filter((subAsset: Asset) => subAsset.parentId === asset.id)
           .forEach((subAsset: Asset) => addAsset(subAsset, level + 1));
@@ -99,7 +100,7 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults })
         .filter((location: Location) => location.parentId === locationId)
         .forEach((location: Location) => {
           flattened.push({ ...location, level, type: 'location' });
-          if (openFolders[location.id]) {
+          if (openFolders[location.id] || expandAll) {
             assets
               .filter((asset: Asset) => asset.locationId === location.id && !asset.parentId)
               .forEach((asset: Asset) => addAsset(asset, level + 1));
@@ -116,7 +117,48 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults })
       .forEach((asset: Asset) => addAsset(asset, 0));
 
     return flattened;
-  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders, filterOperating, filterCritical]);
+  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders, filterOperating, filterCritical, expandAll]);
+
+  const flattenSearchResults = useCallback(() => {
+    const expandedResults: any[] = [];
+
+    const addAssetToResults = (asset: Asset, level: number) => {
+      const type = asset.sensorType ? 'component' : 'asset';
+      expandedResults.push({ ...asset, level, type });
+      if (expandAll || openFolders[asset.id]) {
+        assetsByCompany[selectedCompanyId!]
+          .filter((subAsset: Asset) => subAsset.parentId === asset.id)
+          .forEach((subAsset: Asset) => addAssetToResults(subAsset, level + 1));
+      }
+    };
+
+    const traverse = (locationId: string | null = null, level = 0) => {
+      const locations: Location[] = locationsByCompany[selectedCompanyId!] || [];
+      const assets: Asset[] = assetsByCompany[selectedCompanyId!] || [];
+      locations
+        .filter((location: Location) => location.parentId === locationId)
+        .forEach((location: Location) => {
+          expandedResults.push({ ...location, level, type: 'location' });
+          if (openFolders[location.id] || expandAll) {
+            assets
+              .filter((asset: Asset) => asset.locationId === location.id && !asset.parentId)
+              .forEach((asset: Asset) => addAssetToResults(asset, level + 1));
+            traverse(location.id, level + 1);
+          }
+        });
+    };
+
+    searchResults.forEach(result => {
+      if ('type' in result && result.type === 'location') {
+        expandedResults.push({ ...result, level: 0, type: 'location' });
+        traverse(result.id, 1);
+      } else {
+        addAssetToResults(result as Asset, 0);
+      }
+    });
+
+    return expandedResults;
+  }, [searchResults, assetsByCompany, locationsByCompany, selectedCompanyId, expandAll, openFolders]);
 
   const Row = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
