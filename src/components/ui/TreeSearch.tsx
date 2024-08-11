@@ -4,6 +4,10 @@ import { useAssetStore } from '../../store/assetStore';
 import { useLocationStore } from '../../store/locationStore';
 import { Asset, Location } from '../../types';
 
+import assetIconB from '../../assets/icons/asset-b.svg';
+import componentIconB from '../../assets/icons/component-b.png';
+import locationIconB from '../../assets/icons/location-b.svg';
+
 type TreeSearchProps = {
   selectedCompanyId: string | null;
   onSearch: (results: (Asset | Location)[], expandAll: boolean) => void;
@@ -100,21 +104,14 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
 
   const getIcon = (item: Asset | Location) => {
     if ('sensorType' in item) {
-      // If it's a component
-      switch (item.sensorType) {
-        case 'vibration':
-          return '📳';
-        case 'energy':
-          return '⚡';
-        default:
-          return '🔌';
-      }
+      // It's a component
+      return componentIconB;
     } else if ('parentId' in item) {
-      // If it has a parentId but no sensorType, it's an asset
-      return '🔧';
+      // It's an asset
+      return assetIconB;
     } else {
-      // Otherwise, it's a location
-      return '📁';
+      // It's a location
+      return locationIconB;
     }
   };
 
@@ -151,7 +148,7 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
                 setPreviewResults([]);
               }}
             >
-              <span className="mr-2">{getIcon(item)}</span>
+              <img src={getIcon(item)} alt="icon" className="mr-2 w-4 h-4" />
               {item.name}
             </div>
           ))}
