@@ -4,6 +4,7 @@ import { useAssetStore } from '../../store/assetStore';
 import { useLocationStore } from '../../store/locationStore';
 import { Asset, Location } from '../../types';
 
+import arrowIcon from '../../assets/icons/arrow.svg'; // Import the arrow icon
 import assetIconB from '../../assets/icons/asset-b.svg';
 import assetIconW from '../../assets/icons/asset-w.svg';
 import componentIconB from '../../assets/icons/component-b.png';
@@ -20,6 +21,7 @@ type TreeNodeProps = {
   type: 'location' | 'asset' | 'component';
   onClick: () => void;
   hasChildren: boolean;
+  isOpen: boolean;
   level: number;
   isSelected: boolean;
   status?: string;
@@ -30,6 +32,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   type,
   onClick,
   hasChildren,
+  isOpen,
   level,
   isSelected,
   status,
@@ -57,12 +60,24 @@ const TreeNode: React.FC<TreeNodeProps> = ({
       className={`cursor-pointer flex items-center ${
         isSelected ? 'bg-tractian-blue-200 text-white' : ''
       }`}
-      style={{ paddingLeft: `${level * 20}px` }}
+      style={{ paddingLeft: `${level * 20 + 2}px` }} // Added extra 2px padding
     >
+      {hasChildren && (
+        <img
+          src={arrowIcon}
+          alt="arrow icon"
+          className="mr-2 transition-transform"
+          style={{
+            width: '10px',
+            height: '10px',
+            transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+          }}
+        />
+      )}
       {iconSrc && <img src={iconSrc} alt={`${type} icon`} className="mr-2" />}
-      <span className="mr-2">{name}</span>
+      <span className="mr-1.5 text-lg">{name}</span>
       {statusIconSrc && (
-        <img src={statusIconSrc} alt={`${status} icon`} className={`${statusIconSize} ml-2`} />
+        <img src={statusIconSrc} alt={`${status} icon`} className={`${statusIconSize}`} />
       )}
     </div>
   );
@@ -279,6 +294,7 @@ const TreeView: React.FC<TreeViewProps> = ({
               onAssetSelect(item);
             }}
             hasChildren={hasChildren}
+            isOpen={!!openFolders[item.id]}
             level={item.level || 0}
             isSelected={selectedAsset ? selectedAsset.id === item.id : false}
             status={item.status}
