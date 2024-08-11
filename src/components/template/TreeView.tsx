@@ -190,7 +190,6 @@ const TreeView: React.FC<TreeViewProps> = ({
       const type = asset.sensorType ? 'component' : 'asset';
       expandedResults.push({ ...asset, level, type });
 
-      // Don't expand children by default
       const isOpen = openFolders[asset.id] || expandAll;
 
       assetsByCompany[selectedCompanyId!]
@@ -233,15 +232,14 @@ const TreeView: React.FC<TreeViewProps> = ({
 
     searchResults.forEach((result) => {
       if ('locationId' in result || 'parentId' in result) {
-        // Ensure that the search result can be displayed in a tree structure.
-        expandedResults.push({ ...result, level: 0, type: 'location' });
+        expandedResults.push({ ...result, level: 0, type: result.sensorType ? 'component' : 'asset' });
         if ('parentId' in result) {
           traverse(result.id, 1);
         } else {
           addAssetAndChildren(result as Asset, 0);
         }
       } else {
-        expandedResults.push(result); // Add non-hierarchical results directly.
+        expandedResults.push({ ...result, level: 0, type: 'location' });
       }
     });
 
@@ -313,7 +311,7 @@ const TreeView: React.FC<TreeViewProps> = ({
   }
 
   return (
-    <List height={600} itemCount={flattenedTree.length} itemSize={30} width="100%">
+    <List height={580} itemCount={flattenedTree.length} itemSize={30} width="100%">
       {Row}
     </List>
   );

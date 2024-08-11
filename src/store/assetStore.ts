@@ -5,22 +5,25 @@ import { Asset, assetSchema } from '../types/asset';
 
 export type AssetState = {
   assetsByCompany: { [companyId: string]: Asset[] };
+  searchResults: Asset[]; // Store the flattened search results here
   loading: boolean;
   error: string | null;
-  filterOperating: boolean; // New state for filtering operating sensors
-  filterCritical: boolean;  // New state for filtering critical sensors
+  filterOperating: boolean; // Filter state
+  filterCritical: boolean;  // Filter state
   fetchAssets: (companyId: string) => Promise<void>;
   setAssets: (companyId: string, assets: Asset[]) => void;
-  toggleFilterOperating: () => void; // New action to toggle the operating filter
-  toggleFilterCritical: () => void;  // New action to toggle the critical filter
+  setSearchResults: (results: Asset[]) => void; // Update search results
+  toggleFilterOperating: () => void;
+  toggleFilterCritical: () => void;
 };
 
 export const useAssetStore = create<AssetState>((set, get) => ({
   assetsByCompany: {},
+  searchResults: [], // Initialize as empty
   loading: false,
   error: null,
-  filterOperating: false, // Initialize filter state
-  filterCritical: false,  // Initialize filter state
+  filterOperating: false,
+  filterCritical: false,
 
   fetchAssets: async (companyId: string) => {
     if (get().assetsByCompany[companyId]) {
@@ -31,7 +34,7 @@ export const useAssetStore = create<AssetState>((set, get) => ({
 
     try {
       const assetsData = await fetchCompanyAssetsData(companyId);
-      const validatedAssets = z.array(assetSchema).parse(assetsData); // Validate the array of assets
+      const validatedAssets = z.array(assetSchema).parse(assetsData);
 
       set((state) => ({
         assetsByCompany: { ...state.assetsByCompany, [companyId]: validatedAssets },
@@ -44,19 +47,21 @@ export const useAssetStore = create<AssetState>((set, get) => ({
   },
 
   setAssets: (companyId, assets) => {
-    const validatedAssets = z.array(assetSchema).parse(assets); // Validate the array of assets
+    const validatedAssets = z.array(assetSchema).parse(assets);
     set((state) => ({
       assetsByCompany: { ...state.assetsByCompany, [companyId]: validatedAssets }
     }));
   },
 
-  // Action to toggle the operating filter
+  setSearchResults: (results) => {
+    set({ searchResults: results });
+  },
+
   toggleFilterOperating: () => set((state) => ({
-    filterOperating: !state.filterOperating
+    filterOperating: !state.filterOperating,
   })),
 
-  // Action to toggle the critical filter
   toggleFilterCritical: () => set((state) => ({
-    filterCritical: !state.filterCritical
+    filterCritical: !state.filterCritical,
   })),
 }));

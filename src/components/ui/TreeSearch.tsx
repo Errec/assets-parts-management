@@ -7,16 +7,14 @@ import { Asset, Location } from '../../types';
 type TreeSearchProps = {
   selectedCompanyId: string | null;
   onSearch: (results: (Asset | Location)[], expandAll: boolean) => void;
-}
+};
 
 const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [previewResults, setPreviewResults] = useState<(Asset | Location)[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const { assetsByCompany } = useAssetStore();
   const { locationsByCompany } = useLocationStore();
   const inputRef = useRef<HTMLInputElement>(null);
-  const resultsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   const performSearch = useCallback((term: string) => {
     if (term.length >= 3 && selectedCompanyId) {
@@ -32,7 +30,6 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
 
       const results = [...filteredAssets, ...filteredLocations];
       setPreviewResults(results);
-      setSelectedIndex(-1);
     } else {
       setPreviewResults([]);
     }
@@ -54,38 +51,24 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
 
   const handleSearchSubmit = () => {
     if (searchTerm.trim() === '') {
-      // Return the original tree when search is empty
       onSearch([], false);
-    } else if (selectedIndex !== -1) {
-      onSearch([previewResults[selectedIndex]], false);
-      setSearchTerm('');
-      setPreviewResults([]);
     } else {
       onSearch(previewResults, false);
-      setSearchTerm('');
-      setPreviewResults([]);
     }
+    setSearchTerm('');
+    setPreviewResults([]);
     inputRef.current?.blur();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleSearchSubmit();
-    } else if (e.key === 'ArrowDown') {
-      setSelectedIndex((prev) => Math.min(prev + 1, previewResults.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      setSelectedIndex((prev) => Math.max(prev - 1, 0));
     }
   };
 
-  useEffect(() => {
-    if (selectedIndex !== -1 && resultsRef.current[selectedIndex]) {
-      resultsRef.current[selectedIndex]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  }, [selectedIndex]);
-
   const getIcon = (item: Asset | Location) => {
     if ('sensorType' in item) {
+      // If it's a component
       switch (item.sensorType) {
         case 'vibration':
           return '📳';
@@ -94,9 +77,11 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
         default:
           return '🔌';
       }
-    } else if ('locationId' in item) {
+    } else if ('parentId' in item) {
+      // If it has a parentId but no sensorType, it's an asset
       return '🔧';
     } else {
+      // Otherwise, it's a location
       return '📁';
     }
   };
@@ -121,11 +106,10 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
       </div>
       {previewResults.length > 0 && searchTerm.length >= 3 && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto">
-          {previewResults.map((item, index) => (
+          {previewResults.map((item) => (
             <div
               key={item.id}
-              ref={(el) => (resultsRef.current[index] = el)}
-              className={`p-2 cursor-pointer flex items-center ${selectedIndex === index ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'}`}
+              className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
               onClick={() => {
                 onSearch([item], false);
                 setSearchTerm('');
@@ -136,6 +120,11 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
               {item.name}
             </div>
           ))}
+        </div>
+      )}
+      {searchTerm.length >= 3 && previewResults.length === 0 && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg p-2">
+          No results found
         </div>
       )}
     </div>
