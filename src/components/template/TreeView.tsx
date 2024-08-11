@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import { useAssetStore } from '../../store/assetStore';
 import { useLocationStore } from '../../store/locationStore';
 import { Asset, Location } from '../../types';
+
+const TreeLoading = lazy(() => import('../ui/TreeLoading'));
 
 type TreeNodeProps = {
   name: string;
@@ -87,6 +89,9 @@ const TreeView: React.FC<TreeViewProps> = ({
   const { locationsByCompany, fetchLocations } = useLocationStore();
   const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>({});
   const [flattenedTree, setFlattenedTree] = useState<any[]>([]);
+
+  const containerHeight = 580; // Define the height of the container
+  const itemHeight = 30; // Define the height of each item
 
   useEffect(() => {
     if (selectedCompanyId) {
@@ -296,9 +301,9 @@ const TreeView: React.FC<TreeViewProps> = ({
     !locationsByCompany[selectedCompanyId]
   ) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        Loading...
-      </div>
+      <Suspense fallback={<div>Loading...</div>}>
+        <TreeLoading height={containerHeight} itemHeight={itemHeight} />
+      </Suspense>
     );
   }
 
@@ -311,7 +316,7 @@ const TreeView: React.FC<TreeViewProps> = ({
   }
 
   return (
-    <List height={580} itemCount={flattenedTree.length} itemSize={30} width="100%">
+    <List height={containerHeight} itemCount={flattenedTree.length} itemSize={itemHeight} width="100%">
       {Row}
     </List>
   );

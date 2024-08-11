@@ -12,9 +12,11 @@ type TreeSearchProps = {
 const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [previewResults, setPreviewResults] = useState<(Asset | Location)[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const { assetsByCompany } = useAssetStore();
   const { locationsByCompany } = useLocationStore();
   const inputRef = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const performSearch = useCallback((term: string) => {
     if (term.length >= 3 && selectedCompanyId) {
@@ -30,6 +32,7 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
 
       const results = [...filteredAssets, ...filteredLocations];
       setPreviewResults(results);
+      setSelectedIndex(-1); // Reset selected index on new search
     } else {
       setPreviewResults([]);
     }
@@ -52,6 +55,8 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
   const handleSearchSubmit = () => {
     if (searchTerm.trim() === '') {
       onSearch([], false);
+    } else if (selectedIndex >= 0 && previewResults[selectedIndex]) {
+      onSearch([previewResults[selectedIndex]], false);
     } else {
       onSearch(previewResults, false);
     }
@@ -63,8 +68,35 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleSearchSubmit();
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev + 1) % previewResults.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev - 1 + previewResults.length) % previewResults.length);
+    } else if (e.key === 'Escape') {
+      setSearchTerm('');
+      setPreviewResults([]);
+      setSelectedIndex(-1);
+      inputRef.current?.blur();
     }
   };
+
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    if (inputRef.current && !inputRef.current.contains(event.target as Node) &&
+        previewRef.current && !previewRef.current.contains(event.target as Node)) {
+      setSearchTerm('');
+      setPreviewResults([]);
+      setSelectedIndex(-1);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [handleClickOutside]);
 
   const getIcon = (item: Asset | Location) => {
     if ('sensorType' in item) {
@@ -105,11 +137,14 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
         </button>
       </div>
       {previewResults.length > 0 && searchTerm.length >= 3 && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto">
-          {previewResults.map((item) => (
+        <div 
+          ref={previewRef}
+          className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto"
+        >
+          {previewResults.map((item, index) => (
             <div
               key={item.id}
-              className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
+              className={`p-2 hover:bg-gray-100 cursor-pointer flex items-center ${index === selectedIndex ? 'bg-gray-200' : ''}`}
               onClick={() => {
                 onSearch([item], false);
                 setSearchTerm('');

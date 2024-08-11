@@ -3,14 +3,14 @@ import alertIcon from '../../assets/icons/alert.svg';
 import sensorIcon from '../../assets/icons/sensor.svg';
 import Button from '../ui/Button';
 
-type HeaderProps = {
+type ContainerHeadProps = {
   companyName: string;
   onFilterToggle: (filterType: 'operating' | 'critical') => void;
   filterOperating: boolean;
   filterCritical: boolean;
 };
 
-const Header: React.FC<HeaderProps> = ({ companyName, onFilterToggle, filterOperating, filterCritical }) => {
+const ContainerHead: React.FC<ContainerHeadProps> = ({ companyName, onFilterToggle, filterOperating, filterCritical }) => {
   return (
     <header className="top-0 w-full h-12 flex justify-between items-center px-4 mb-4">
       <div className="flex items-center text-left">
@@ -39,4 +39,4 @@ const Header: React.FC<HeaderProps> = ({ companyName, onFilterToggle, filterOper
   );
 };
 
-export default Header;
+export default ContainerHead;
