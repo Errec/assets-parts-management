@@ -7,9 +7,10 @@ import Button from '../ui/Button';
 type HeaderProps = {
   onSelectCompany: (companyId: string | null) => void;
   selectedCompanyId: string | null;
+  onClearSearch: () => void;
 };
 
-const Header: React.FC<HeaderProps> = ({ onSelectCompany, selectedCompanyId }) => {
+const Header: React.FC<HeaderProps> = ({ onSelectCompany, selectedCompanyId, onClearSearch }) => {
   const { companies, fetchCompanies } = useCompanyStore();
 
   useEffect(() => {
@@ -22,6 +23,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectCompany, selectedCompanyId }) =
     } else {
       onSelectCompany(companyId); // Select the clicked company
     }
+    onClearSearch(); // Clear the search input
   };
 
   return (

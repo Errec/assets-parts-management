@@ -1,3 +1,4 @@
+// App.tsx
 import React, { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import './App.css';
@@ -11,10 +12,15 @@ const queryClient = new QueryClient();
 const App: React.FC = () => {
   const { fetchCompanies, error } = useCompanyStore();
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
-  console.log(selectedCompanyId);
+  const [searchTerm, setSearchTerm] = useState('');
+
   useEffect(() => {
     fetchCompanies();
   }, [fetchCompanies]);
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+  };
 
   if (error) {
     return <div>Error: {error}</div>;
@@ -23,7 +29,11 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <Header onSelectCompany={setSelectedCompanyId} selectedCompanyId={selectedCompanyId} />
+        <Header 
+          onSelectCompany={setSelectedCompanyId} 
+          selectedCompanyId={selectedCompanyId} 
+          onClearSearch={handleClearSearch}
+        />
         <main className="p-4 w-full flex items-center justify-center min-h-screen">
           {selectedCompanyId ? (
             <Container selectedCompanyId={selectedCompanyId} />

@@ -15,7 +15,6 @@ type TreeNodeProps = {
   status?: string;
 }
 
-// Define the TreeNode component
 const TreeNode: React.FC<TreeNodeProps> = ({ name, type, isOpen, onClick, hasChildren, level, sensorType, status }) => {
   const getIcon = () => {
     if (type === 'location') return isOpen ? '📂' : '📁';
@@ -44,13 +43,12 @@ const TreeNode: React.FC<TreeNodeProps> = ({ name, type, isOpen, onClick, hasChi
   );
 };
 
-// Define the TreeViewProps type
 type TreeViewProps = {
   selectedCompanyId: string | null;
+  searchResults: (Asset | Location)[];
 }
 
-// Define the TreeView component
-const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId }) => {
+const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults }) => {
   const { assetsByCompany, fetchAssets, filterOperating, filterCritical } = useAssetStore();
   const { locationsByCompany, fetchLocations } = useLocationStore();
   const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>({});
@@ -65,10 +63,10 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId }) => {
 
   useEffect(() => {
     if (selectedCompanyId && assetsByCompany[selectedCompanyId] && locationsByCompany[selectedCompanyId]) {
-      const flattened = flattenTree();
+      const flattened = searchResults.length > 0 ? searchResults : flattenTree();
       setFlattenedTree(flattened);
     }
-  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders, filterOperating, filterCritical]);
+  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders, filterOperating, filterCritical, searchResults]);
 
   const toggleFolder = useCallback((id: string) => {
     setOpenFolders((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -131,11 +129,11 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId }) => {
         <div style={style}>
           <TreeNode
             name={item.name}
-            type={item.type}
+            type={item.type || (item.sensorType ? 'component' : 'asset')}
             isOpen={!!openFolders[item.id]}
             onClick={() => toggleFolder(item.id)}
             hasChildren={hasChildren}
-            level={item.level}
+            level={item.level || 0}
             sensorType={item.sensorType}
             status={item.status}
           />
@@ -147,6 +145,10 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId }) => {
 
   if (!selectedCompanyId || !assetsByCompany[selectedCompanyId] || !locationsByCompany[selectedCompanyId]) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (flattenedTree.length === 0) {
+    return <div className="flex items-center justify-center min-h-screen">No results found</div>;
   }
 
   return (
