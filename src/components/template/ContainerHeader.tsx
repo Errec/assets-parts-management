@@ -1,32 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import alertIcon from '../../assets/icons/alert.svg';
 import sensorIcon from '../../assets/icons/sensor.svg';
-import { useAssetStore } from '../../store/assetStore'; // Import Zustand store
 import Button from '../ui/Button';
 
-type ContainerHeaderProps = {
+type HeaderProps = {
   companyName: string;
+  onFilterToggle: (filterType: 'operating' | 'critical') => void;
+  filterOperating: boolean;
+  filterCritical: boolean;
 };
 
-const ContainerHeader: React.FC<ContainerHeaderProps> = ({ companyName }) => {
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const { toggleFilterOperating, toggleFilterCritical } = useAssetStore(); // Access actions from the store
-
-  const handleFilterClick = (selectedFilter: string) => {
-    setSelectedFilters(prevFilters =>
-      prevFilters.includes(selectedFilter)
-        ? prevFilters.filter(filter => filter !== selectedFilter)
-        : [...prevFilters, selectedFilter]
-    );
-
-    // Dispatch actions based on the selected filter
-    if (selectedFilter === 'sensor') {
-      toggleFilterOperating();
-    } else if (selectedFilter === 'alert') {
-      toggleFilterCritical();
-    }
-  };
-
+const Header: React.FC<HeaderProps> = ({ companyName, onFilterToggle, filterOperating, filterCritical }) => {
   return (
     <header className="top-0 w-full h-12 flex justify-between items-center px-4 mb-4">
       <div className="flex items-center text-left">
@@ -41,18 +25,18 @@ const ContainerHeader: React.FC<ContainerHeaderProps> = ({ companyName }) => {
         <Button 
           icon={<img src={sensorIcon} alt="Sensor Icon" className="h-5 w-5" />} 
           title="Sensor de Energia" 
-          isSelected={selectedFilters.includes('sensor')} 
-          onClick={() => handleFilterClick('sensor')}
+          isSelected={filterOperating} 
+          onClick={() => onFilterToggle('operating')}
         />
         <Button 
           icon={<img src={alertIcon} alt="Alert Icon" className="h-5 w-5" />} 
           title="Crítico" 
-          isSelected={selectedFilters.includes('alert')} 
-          onClick={() => handleFilterClick('alert')}
+          isSelected={filterCritical} 
+          onClick={() => onFilterToggle('critical')}
         />
       </div>
     </header>
   );
 };
 
-export default ContainerHeader;
+export default Header;

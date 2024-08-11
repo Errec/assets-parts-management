@@ -13,7 +13,7 @@ type TreeNodeProps = {
   level: number;
   sensorType?: string;
   status?: string;
-}
+};
 
 const TreeNode: React.FC<TreeNodeProps> = ({ name, type, isOpen, onClick, hasChildren, level, sensorType, status }) => {
   const getIcon = () => {
@@ -47,10 +47,12 @@ type TreeViewProps = {
   selectedCompanyId: string | null;
   searchResults: (Asset | Location)[];
   expandAll: boolean;
-}
+  filterOperating: boolean;
+  filterCritical: boolean;
+};
 
-const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults, expandAll }) => {
-  const { assetsByCompany, fetchAssets, filterOperating, filterCritical } = useAssetStore();
+const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults, expandAll, filterOperating, filterCritical }) => {
+  const { assetsByCompany, fetchAssets } = useAssetStore();
   const { locationsByCompany, fetchLocations } = useLocationStore();
   const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>({});
   const [flattenedTree, setFlattenedTree] = useState<any[]>([]);
@@ -67,7 +69,7 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults, e
       const flattened = searchResults.length > 0 ? flattenSearchResults() : flattenTree();
       setFlattenedTree(flattened);
     }
-  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders, filterOperating, filterCritical, searchResults]);
+  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders, searchResults, expandAll, filterOperating, filterCritical]);
 
   const toggleFolder = useCallback((id: string) => {
     setOpenFolders((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -111,54 +113,78 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults, e
 
     traverse();
 
-    // Add unlinked assets and components
     assets
       .filter((asset: Asset) => !asset.locationId && !asset.parentId)
       .forEach((asset: Asset) => addAsset(asset, 0));
 
     return flattened;
-  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders, filterOperating, filterCritical, expandAll]);
+  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders, expandAll, filterOperating, filterCritical]);
 
   const flattenSearchResults = useCallback(() => {
     const expandedResults: any[] = [];
 
-    const addAssetToResults = (asset: Asset, level: number) => {
+    const addAssetAndChildren = (asset: Asset, level: number) => {
+      if (
+        (filterOperating && asset.status !== 'operating') ||
+        (filterCritical && asset.status !== 'alert')
+      ) return;
+
       const type = asset.sensorType ? 'component' : 'asset';
       expandedResults.push({ ...asset, level, type });
-      if (expandAll || openFolders[asset.id]) {
-        assetsByCompany[selectedCompanyId!]
-          .filter((subAsset: Asset) => subAsset.parentId === asset.id)
-          .forEach((subAsset: Asset) => addAssetToResults(subAsset, level + 1));
-      }
+
+      // Don't expand children by default
+      const isOpen = openFolders[asset.id] || expandAll;
+
+      assetsByCompany[selectedCompanyId!]
+        .filter((subAsset: Asset) => subAsset.parentId === asset.id)
+        .forEach((subAsset: Asset) => {
+          if (isOpen) {
+            addAssetAndChildren(subAsset, level + 1);
+          }
+        });
     };
 
-    const traverse = (locationId: string | null = null, level = 0) => {
+    const traverse = (locationId: string, level: number) => {
       const locations: Location[] = locationsByCompany[selectedCompanyId!] || [];
       const assets: Asset[] = assetsByCompany[selectedCompanyId!] || [];
+
+      const location = locations.find(loc => loc.id === locationId);
+      if (location) {
+        expandedResults.push({ ...location, level, type: 'location' });
+      }
+
+      const isOpen = openFolders[locationId] || expandAll;
+
+      assets
+        .filter((asset: Asset) => asset.locationId === locationId && !asset.parentId)
+        .forEach((asset: Asset) => {
+          if (isOpen) {
+            addAssetAndChildren(asset, level + 1);
+          }
+        });
+
       locations
-        .filter((location: Location) => location.parentId === locationId)
-        .forEach((location: Location) => {
-          expandedResults.push({ ...location, level, type: 'location' });
-          if (openFolders[location.id] || expandAll) {
-            assets
-              .filter((asset: Asset) => asset.locationId === location.id && !asset.parentId)
-              .forEach((asset: Asset) => addAssetToResults(asset, level + 1));
-            traverse(location.id, level + 1);
+        .filter((loc: Location) => loc.parentId === locationId)
+        .forEach((loc: Location) => {
+          if (isOpen) {
+            traverse(loc.id, level + 1);
           }
         });
     };
 
     searchResults.forEach(result => {
-      if ('type' in result && result.type === 'location') {
+      if ('parentId' in result) {
+        // Add the location and traverse its children, collapsed by default
         expandedResults.push({ ...result, level: 0, type: 'location' });
         traverse(result.id, 1);
       } else {
-        addAssetToResults(result as Asset, 0);
+        // Add the asset and its children, collapsed by default
+        addAssetAndChildren(result as Asset, 0);
       }
     });
 
     return expandedResults;
-  }, [searchResults, assetsByCompany, locationsByCompany, selectedCompanyId, expandAll, openFolders]);
+  }, [searchResults, assetsByCompany, locationsByCompany, selectedCompanyId, filterOperating, filterCritical, openFolders, expandAll]);
 
   const Row = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
@@ -194,7 +220,7 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults, e
   }
 
   return (
-    <List height={580} itemCount={flattenedTree.length} itemSize={30} width="100%">
+    <List height={600} itemCount={flattenedTree.length} itemSize={30} width="100%">
       {Row}
     </List>
   );

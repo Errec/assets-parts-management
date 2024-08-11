@@ -14,6 +14,8 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
   const [companyName, setCompanyName] = useState<string>('');
   const [searchResults, setSearchResults] = useState<(Asset | Location)[]>([]);
   const [expandAll, setExpandAll] = useState<boolean>(false);
+  const [filterOperating, setFilterOperating] = useState<boolean>(false);
+  const [filterCritical, setFilterCritical] = useState<boolean>(false);
 
   useEffect(() => {
     fetchCompanies();
@@ -26,8 +28,10 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
     } else {
       setCompanyName('');
     }
-    setSearchResults([]); // Clear search results when company changes
-    setExpandAll(false); // Reset expandAll when company changes
+    setSearchResults([]);
+    setExpandAll(false);
+    setFilterOperating(false);
+    setFilterCritical(false);
   }, [selectedCompanyId, companies]);
 
   const handleSearch = useCallback((results: (Asset | Location)[], expand: boolean) => {
@@ -35,9 +39,22 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
     setExpandAll(expand);
   }, []);
 
+  const handleFilterToggle = useCallback((filterType: 'operating' | 'critical') => {
+    if (filterType === 'operating') {
+      setFilterOperating(prev => !prev);
+    } else {
+      setFilterCritical(prev => !prev);
+    }
+  }, []);
+
   return (
-    <section className="fixed top-16 bg-white rounded-md p-2 border border-gray-300 overflow-hidden " style={{ width: '98vw', maxHeight: '720x' }}>
-      <ContainerHeader companyName={companyName} />
+    <section className="fixed top-16 bg-white rounded-md p-2 border border-gray-300" style={{ width: '98vw', maxHeight: '1200px' }}>
+      <ContainerHeader 
+        companyName={companyName} 
+        onFilterToggle={handleFilterToggle}
+        filterOperating={filterOperating}
+        filterCritical={filterCritical}
+      />
       {selectedCompanyId && (
         <TreeSearch 
           selectedCompanyId={selectedCompanyId} 
@@ -48,6 +65,8 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
         selectedCompanyId={selectedCompanyId} 
         searchResults={searchResults} 
         expandAll={expandAll}
+        filterOperating={filterOperating}
+        filterCritical={filterCritical}
       />
     </section>
   );
