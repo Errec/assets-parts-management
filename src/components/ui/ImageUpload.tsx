@@ -7,7 +7,7 @@ const acceptedFileTypes: Accept = {
 
 interface ImageUploadProps {
   onImageUpload: (file: File) => void;
-  currentImage?: string;
+  currentImage?: string | null; // Allow null as well
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, currentImage }) => {
@@ -21,18 +21,18 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, currentImage }
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    accept: acceptedFileTypes, // Updated to use the correct type
+    accept: acceptedFileTypes, 
     multiple: false,
   });
 
   return (
     <div
       {...getRootProps()}
-      className="flex flex-col items-center justify-center border-2 border-dashed border-blue-200 bg-blue-50 w-full h-56 cursor-pointer"
+      className={`flex items-center justify-center w-full h-56 cursor-pointer ${preview ? '' : 'flex-col'}`}
     >
       <input {...getInputProps()} />
       {preview ? (
-        <img src={preview} alt="Preview" className="object-contain max-h-full" />
+        <img src={preview} alt="Uploaded" className="w-full h-full object-cover" />
       ) : (
         <>
           <img src="/src/assets/icons/image-box.svg" alt="Add" className="w-8 h-8 mb-2" />

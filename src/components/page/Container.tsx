@@ -8,7 +8,7 @@ import TreeSearch from '../ui/TreeSearch';
 
 type ContainerProps = {
   selectedCompanyId: string | null;
-};
+}
 
 const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
   const { companies, fetchCompanies } = useCompanyStore();
@@ -48,6 +48,7 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
     } else {
       setFilterCritical(prev => !prev);
     }
+    setSelectedAsset(null); // Clear selected asset on filter toggle
   }, []);
 
   const handleAssetSelect = (asset: Asset | Location) => {
@@ -62,8 +63,8 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
         filterOperating={filterOperating}
         filterCritical={filterCritical}
       />
-      <div className="grid grid-cols-2 gap-4">
-        <div>
+      <div className="flex gap-2">
+        <div className="w-2/5 border border-gray-300 rounded-md p-2"> {/* 35% width */}
           {selectedCompanyId && (
             <TreeSearch 
               selectedCompanyId={selectedCompanyId} 
@@ -76,10 +77,11 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
             expandAll={expandAll}
             filterOperating={filterOperating}
             filterCritical={filterCritical}
+            selectedAsset={selectedAsset}
             onAssetSelect={handleAssetSelect} // Pass the select handler
           />
         </div>
-        <div>
+        <div className="w-3/5 border border-gray-300 rounded-md p-2"> {/* 65% width */}
           {selectedAsset && 'sensorType' in selectedAsset ? (
             <AssetView 
               name={selectedAsset.name}
@@ -87,6 +89,7 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
               sensorId={selectedAsset.sensorId}
               gatewayId={selectedAsset.gatewayId}
               status={selectedAsset.status}
+              locationId={selectedAsset.locationId} // Pass locationId to AssetView
             />
           ) : (
             <div className="text-center text-gray-500">Selecione um ativo para visualizar</div>

@@ -4,7 +4,7 @@ import { useAssetStore } from '../../store/assetStore';
 import { useLocationStore } from '../../store/locationStore';
 import { Asset, Location } from '../../types';
 
-interface TreeSearchProps {
+type TreeSearchProps = {
   selectedCompanyId: string | null;
   onSearch: (results: (Asset | Location)[], expandAll: boolean) => void;
 }
