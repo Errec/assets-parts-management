@@ -56,7 +56,7 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
   };
 
   return (
-    <section className="fixed top-16 bg-white rounded-md p-2 border border-gray-300" style={{ width: '98vw', maxHeight: '1200px' }}>
+    <section className="fixed top-16 bg-white rounded-md p-2 border border-tractian-gray-50" style={{ width: '98vw', maxHeight: '1200px' }}>
       <ContainerHeader 
         companyName={companyName} 
         onFilterToggle={handleFilterToggle}
@@ -64,7 +64,7 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
         filterCritical={filterCritical}
       />
       <div className="flex gap-2">
-        <div className="w-2/5 border border-gray-300 rounded-md p-2"> {/* 35% width */}
+        <div className="w-2/5 border border-tractian-gray-50 rounded-md p-2"> {/* 35% width */}
           {selectedCompanyId && (
             <TreeSearch 
               selectedCompanyId={selectedCompanyId} 
@@ -81,7 +81,7 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
             onAssetSelect={handleAssetSelect} // Pass the select handler
           />
         </div>
-        <div className="w-3/5 border border-gray-300 rounded-md p-2"> {/* 65% width */}
+        <div className="w-3/5 border border-tractian-gray-50 rounded-md p-2"> {/* 65% width */}
           {selectedAsset && 'sensorType' in selectedAsset ? (
             <AssetView 
               name={selectedAsset.name}
@@ -92,7 +92,7 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
               locationId={selectedAsset.locationId} // Pass locationId to AssetView
             />
           ) : (
-            <div className="text-center text-gray-500">Selecione um ativo para visualizar</div>
+            <div className="text-center text-tractian-blue-100">Selecione um ativo para visualizar</div>
           )}
         </div>
       </div>

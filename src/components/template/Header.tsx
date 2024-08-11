@@ -27,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectCompany, selectedCompanyId, onC
   };
 
   return (
-    <header className="fixed z-50 top-0 w-full h-12 bg-gray-800 text-white flex justify-between items-center px-4">
+    <header className="fixed z-50 top-0 w-full h-12 bg-tractian-blue-400 text-white flex justify-between items-center px-4">
       <img src={tractianLogo} alt="Tractian Logo" className="h-3.5" />
       <nav className="flex space-x-4">
         {companies.map((company) => (
@@ -37,6 +37,8 @@ const Header: React.FC<HeaderProps> = ({ onSelectCompany, selectedCompanyId, onC
             title={company.name + ' Unit'} 
             onClick={() => handleCompanyClick(company.id)}
             isSelected={selectedCompanyId === company.id}
+            selectedStyles="bg-blue-600 text-white" // Selected state with white text
+            defaultStyles="bg-transparent border border-blue-500 text-white hover:bg-blue-600 hover:text-white" // Default state with white text
           />
         ))}
       </nav>

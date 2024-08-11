@@ -4,63 +4,65 @@ import { useAssetStore } from '../../store/assetStore';
 import { useLocationStore } from '../../store/locationStore';
 import { Asset, Location } from '../../types';
 
+import assetIconB from '../../assets/icons/asset-b.svg';
+import assetIconW from '../../assets/icons/asset-w.svg';
+import componentIconB from '../../assets/icons/component-b.png';
+import componentIconW from '../../assets/icons/component-w.png';
+import locationIconB from '../../assets/icons/location-b.svg';
+import locationIconW from '../../assets/icons/location-w.svg';
+import alertAlertIcon from '../../assets/icons/status-alert.svg';
+import alertOperationalIcon from '../../assets/icons/status-operational.svg';
+
 const TreeLoading = lazy(() => import('../ui/TreeLoading'));
 
 type TreeNodeProps = {
   name: string;
   type: 'location' | 'asset' | 'component';
-  isOpen: boolean;
   onClick: () => void;
   hasChildren: boolean;
   level: number;
   isSelected: boolean;
-  sensorType?: string;
   status?: string;
 };
 
 const TreeNode: React.FC<TreeNodeProps> = ({
   name,
   type,
-  isOpen,
   onClick,
   hasChildren,
   level,
   isSelected,
-  sensorType,
   status,
 }) => {
   const getIcon = () => {
-    if (type === 'location') return isOpen ? '📂' : '📁';
-    if (type === 'asset') return '🔧';
-    if (type === 'component') {
-      if (sensorType === 'vibration') return '📳';
-      if (sensorType === 'energy') return '⚡';
-      return '🔌';
-    }
-    return '•';
+    if (type === 'location') return isSelected ? locationIconW : locationIconB;
+    if (type === 'asset') return isSelected ? assetIconW : assetIconB;
+    if (type === 'component') return isSelected ? componentIconW : componentIconB;
+    return undefined;
   };
 
-  const getStatusDot = () => {
-    if (status === 'operating')
-      return <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>;
-    if (status === 'alert')
-      return <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>;
-    return null;
+  const getStatusIcon = () => {
+    if (status === 'operating') return alertOperationalIcon;
+    if (status === 'alert') return alertAlertIcon;
+    return undefined;
   };
+
+  const iconSrc = getIcon();
+  const statusIconSrc = getStatusIcon();
+  const statusIconSize = status === 'operating' ? 'w-3 h-3' : 'w-2 h-2'; // 12px for operational, 8px for alert
 
   return (
     <div
       onClick={onClick}
       className={`cursor-pointer flex items-center ${
-        isSelected ? 'bg-blue-100' : ''
+        isSelected ? 'bg-tractian-blue-200 text-white' : ''
       }`}
       style={{ paddingLeft: `${level * 20}px` }}
     >
-      {getStatusDot()}
-      <span>{getIcon()}</span>
-      <span className="ml-2">{name}</span>
-      {type === 'component' && sensorType && (
-        <span className="ml-2 text-xs text-gray-500">({sensorType})</span>
+      {iconSrc && <img src={iconSrc} alt={`${type} icon`} className="mr-2" />}
+      <span className="mr-2">{name}</span>
+      {statusIconSrc && (
+        <img src={statusIconSrc} alt={`${status} icon`} className={`${statusIconSize} ml-2`} />
       )}
     </div>
   );
@@ -272,7 +274,6 @@ const TreeView: React.FC<TreeViewProps> = ({
           <TreeNode
             name={item.name}
             type={item.type || ('sensorType' in item ? 'component' : 'asset')}
-            isOpen={!!openFolders[item.id]}
             onClick={() => {
               toggleFolder(item.id);
               onAssetSelect(item);
@@ -280,7 +281,6 @@ const TreeView: React.FC<TreeViewProps> = ({
             hasChildren={hasChildren}
             level={item.level || 0}
             isSelected={selectedAsset ? selectedAsset.id === item.id : false}
-            sensorType={'sensorType' in item ? item.sensorType : undefined}
             status={item.status}
           />
         </div>
