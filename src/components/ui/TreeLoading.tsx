@@ -9,15 +9,15 @@ const TreeLoading: React.FC<TreeLoadingProps> = ({ height, itemHeight }) => {
   const itemCount = Math.ceil(height / itemHeight); // Calculate the number of loading items based on the height
 
   return (
-    <div className="flex flex-col space-y-2 p-4 w-full" style={{ height: `${height}px` }}>
+    <ul className="flex flex-col space-y-2 p-4 w-full" style={{ height: `${height}px` }}>
       {Array.from({ length: itemCount }).map((_, index) => (
-        <div
+        <li
           key={index}
-          className="w-full bg-gradient-to-r from-blue-200 to-blue-400 rounded animate-pulse"
+          className="w-full bg-gradient-to-r from-blue-100 to-blue-600 rounded animate-pulse"
           style={{ height: `${itemHeight}px` }}
-        ></div>
+        ></li>
       ))}
-    </div>
+    </ul>
   );
 };
 

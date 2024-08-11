@@ -1,6 +1,8 @@
 import React from 'react';
-import alertIcon from '../../assets/icons/alert.svg';
-import sensorIcon from '../../assets/icons/sensor.svg';
+import alertIconB from '../../assets/icons/alert-b.svg';
+import alertIconW from '../../assets/icons/alert-w.svg';
+import sensorIconB from '../../assets/icons/sensor-b.svg';
+import sensorIconW from '../../assets/icons/sensor-w.svg';
 import Button from '../ui/Button';
 
 type ContainerHeadProps = {
@@ -23,16 +25,18 @@ const ContainerHead: React.FC<ContainerHeadProps> = ({ companyName, onFilterTogg
       </div>
       <div className="flex items-center space-x-2">
         <Button 
-          icon={<img src={sensorIcon} alt="Sensor Icon" className="h-5 w-5" />} 
+          icon={<img src={filterOperating ? sensorIconW : sensorIconB} alt="Sensor Icon" className="h-5 w-5 transition-colors duration-300" />} 
           title="Sensor de Energia" 
           isSelected={filterOperating} 
           onClick={() => onFilterToggle('operating')}
+          className={`transition-colors duration-300 ${filterOperating ? 'text-white' : 'text-blue-500'}`}
         />
         <Button 
-          icon={<img src={alertIcon} alt="Alert Icon" className="h-5 w-5" />} 
+          icon={<img src={filterCritical ? alertIconW : alertIconB} alt="Alert Icon" className="h-5 w-5 transition-colors duration-300" />} 
           title="Crítico" 
           isSelected={filterCritical} 
           onClick={() => onFilterToggle('critical')}
+          className={`transition-colors duration-300 ${filterCritical ? 'text-white' : 'text-blue-500'}`}
         />
       </div>
     </header>

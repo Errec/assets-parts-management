@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import goldIcon from '../../assets/icons/Gold.svg';
-import tractianLogo from '../../assets/imgs/tractian-logo.png';
+import tractianLogo from '../../assets/imgs/LOGO TRACTIAN.svg';
 import { useCompanyStore } from '../../store';
 import Button from '../ui/Button';
 
