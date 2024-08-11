@@ -194,7 +194,7 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults, e
   }
 
   return (
-    <List height={600} itemCount={flattenedTree.length} itemSize={30} width="100%">
+    <List height={580} itemCount={flattenedTree.length} itemSize={30} width="100%">
       {Row}
     </List>
   );

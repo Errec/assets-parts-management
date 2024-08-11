@@ -4,11 +4,11 @@ import sensorIcon from '../../assets/icons/sensor.svg';
 import { useAssetStore } from '../../store/assetStore'; // Import Zustand store
 import Button from '../ui/Button';
 
-type HeaderProps = {
+type ContainerHeaderProps = {
   companyName: string;
 };
 
-const Header: React.FC<HeaderProps> = ({ companyName }) => {
+const ContainerHeader: React.FC<ContainerHeaderProps> = ({ companyName }) => {
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const { toggleFilterOperating, toggleFilterCritical } = useAssetStore(); // Access actions from the store
 
@@ -55,4 +55,4 @@ const Header: React.FC<HeaderProps> = ({ companyName }) => {
   );
 };
 
-export default Header;
+export default ContainerHeader;

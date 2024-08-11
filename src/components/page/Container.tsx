@@ -36,7 +36,7 @@ const Container: React.FC<ContainerProps> = ({ selectedCompanyId }) => {
   }, []);
 
   return (
-    <section className="fixed top-16 bg-white rounded-md p-2 border border-gray-300" style={{ width: '98vw', maxHeight: '1200px' }}>
+    <section className="fixed top-16 bg-white rounded-md p-2 border border-gray-300 overflow-hidden " style={{ width: '98vw', maxHeight: '720x' }}>
       <ContainerHeader companyName={companyName} />
       {selectedCompanyId && (
         <TreeSearch 

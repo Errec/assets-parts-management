@@ -54,7 +54,7 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 760,
+        "height": 800,
         "resizable": false,
         "title": "Asset Management",
         "width": 1260
