@@ -16,7 +16,17 @@ type TreeNodeProps = {
   status?: string;
 };
 
-const TreeNode: React.FC<TreeNodeProps> = ({ name, type, isOpen, onClick, hasChildren, level, isSelected, sensorType, status }) => {
+const TreeNode: React.FC<TreeNodeProps> = ({
+  name,
+  type,
+  isOpen,
+  onClick,
+  hasChildren,
+  level,
+  isSelected,
+  sensorType,
+  status,
+}) => {
   const getIcon = () => {
     if (type === 'location') return isOpen ? '📂' : '📁';
     if (type === 'asset') return '🔧';
@@ -29,21 +39,27 @@ const TreeNode: React.FC<TreeNodeProps> = ({ name, type, isOpen, onClick, hasChi
   };
 
   const getStatusDot = () => {
-    if (status === 'operating') return <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>;
-    if (status === 'alert') return <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>;
+    if (status === 'operating')
+      return <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>;
+    if (status === 'alert')
+      return <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>;
     return null;
   };
 
   return (
     <div
       onClick={onClick}
-      className={`cursor-pointer flex items-center ${isSelected ? 'bg-blue-100' : ''}`}
+      className={`cursor-pointer flex items-center ${
+        isSelected ? 'bg-blue-100' : ''
+      }`}
       style={{ paddingLeft: `${level * 20}px` }}
     >
       {getStatusDot()}
       <span>{getIcon()}</span>
       <span className="ml-2">{name}</span>
-      {type === 'component' && sensorType && <span className="ml-2 text-xs text-gray-500">({sensorType})</span>}
+      {type === 'component' && sensorType && (
+        <span className="ml-2 text-xs text-gray-500">({sensorType})</span>
+      )}
     </div>
   );
 };
@@ -65,7 +81,7 @@ const TreeView: React.FC<TreeViewProps> = ({
   filterOperating,
   filterCritical,
   selectedAsset,
-  onAssetSelect
+  onAssetSelect,
 }) => {
   const { assetsByCompany, fetchAssets } = useAssetStore();
   const { locationsByCompany, fetchLocations } = useLocationStore();
@@ -80,11 +96,25 @@ const TreeView: React.FC<TreeViewProps> = ({
   }, [selectedCompanyId, fetchAssets, fetchLocations]);
 
   useEffect(() => {
-    if (selectedCompanyId && assetsByCompany[selectedCompanyId] && locationsByCompany[selectedCompanyId]) {
-      const flattened = searchResults.length > 0 ? flattenSearchResults() : flattenTree();
+    if (
+      selectedCompanyId &&
+      assetsByCompany[selectedCompanyId] &&
+      locationsByCompany[selectedCompanyId]
+    ) {
+      const flattened =
+        searchResults.length > 0 ? flattenSearchResults() : flattenTree();
       setFlattenedTree(flattened);
     }
-  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders, searchResults, expandAll, filterOperating, filterCritical]);
+  }, [
+    assetsByCompany,
+    locationsByCompany,
+    selectedCompanyId,
+    openFolders,
+    searchResults,
+    expandAll,
+    filterOperating,
+    filterCritical,
+  ]);
 
   const toggleFolder = useCallback((id: string) => {
     setOpenFolders((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -101,7 +131,8 @@ const TreeView: React.FC<TreeViewProps> = ({
       if (
         (filterOperating && asset.status !== 'operating') ||
         (filterCritical && asset.status !== 'alert')
-      ) return;
+      )
+        return;
 
       const type = asset.sensorType ? 'component' : 'asset';
       flattened.push({ ...asset, level, type });
@@ -119,7 +150,10 @@ const TreeView: React.FC<TreeViewProps> = ({
           flattened.push({ ...location, level, type: 'location' });
           if (openFolders[location.id] || expandAll) {
             assets
-              .filter((asset: Asset) => asset.locationId === location.id && !asset.parentId)
+              .filter(
+                (asset: Asset) =>
+                  asset.locationId === location.id && !asset.parentId
+              )
               .forEach((asset: Asset) => addAsset(asset, level + 1));
             traverse(location.id, level + 1);
           }
@@ -133,7 +167,15 @@ const TreeView: React.FC<TreeViewProps> = ({
       .forEach((asset: Asset) => addAsset(asset, 0));
 
     return flattened;
-  }, [assetsByCompany, locationsByCompany, selectedCompanyId, openFolders, expandAll, filterOperating, filterCritical]);
+  }, [
+    assetsByCompany,
+    locationsByCompany,
+    selectedCompanyId,
+    openFolders,
+    expandAll,
+    filterOperating,
+    filterCritical,
+  ]);
 
   const flattenSearchResults = useCallback(() => {
     const expandedResults: any[] = [];
@@ -142,7 +184,8 @@ const TreeView: React.FC<TreeViewProps> = ({
       if (
         (filterOperating && asset.status !== 'operating') ||
         (filterCritical && asset.status !== 'alert')
-      ) return;
+      )
+        return;
 
       const type = asset.sensorType ? 'component' : 'asset';
       expandedResults.push({ ...asset, level, type });
@@ -160,10 +203,11 @@ const TreeView: React.FC<TreeViewProps> = ({
     };
 
     const traverse = (locationId: string, level: number) => {
-      const locations: Location[] = locationsByCompany[selectedCompanyId!] || [];
+      const locations: Location[] =
+        locationsByCompany[selectedCompanyId!] || [];
       const assets: Asset[] = assetsByCompany[selectedCompanyId!] || [];
 
-      const location = locations.find(loc => loc.id === locationId);
+      const location = locations.find((loc) => loc.id === locationId);
       if (location) {
         expandedResults.push({ ...location, level, type: 'location' });
       }
@@ -187,19 +231,31 @@ const TreeView: React.FC<TreeViewProps> = ({
         });
     };
 
-    searchResults.forEach(result => {
-      if ('parentId' in result) {
-        // Add the location and traverse its children, collapsed by default
+    searchResults.forEach((result) => {
+      if ('locationId' in result || 'parentId' in result) {
+        // Ensure that the search result can be displayed in a tree structure.
         expandedResults.push({ ...result, level: 0, type: 'location' });
-        traverse(result.id, 1);
+        if ('parentId' in result) {
+          traverse(result.id, 1);
+        } else {
+          addAssetAndChildren(result as Asset, 0);
+        }
       } else {
-        // Add the asset and its children, collapsed by default
-        addAssetAndChildren(result as Asset, 0);
+        expandedResults.push(result); // Add non-hierarchical results directly.
       }
     });
 
     return expandedResults;
-  }, [searchResults, assetsByCompany, locationsByCompany, selectedCompanyId, filterOperating, filterCritical, openFolders, expandAll]);
+  }, [
+    searchResults,
+    assetsByCompany,
+    locationsByCompany,
+    selectedCompanyId,
+    filterOperating,
+    filterCritical,
+    openFolders,
+    expandAll,
+  ]);
 
   const Row = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
@@ -227,15 +283,33 @@ const TreeView: React.FC<TreeViewProps> = ({
         </div>
       );
     },
-    [flattenedTree, openFolders, toggleFolder, onAssetSelect, selectedAsset]
+    [
+      flattenedTree,
+      openFolders,
+      toggleFolder,
+      onAssetSelect,
+      selectedAsset,
+    ]
   );
 
-  if (!selectedCompanyId || !assetsByCompany[selectedCompanyId] || !locationsByCompany[selectedCompanyId]) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  if (
+    !selectedCompanyId ||
+    !assetsByCompany[selectedCompanyId] ||
+    !locationsByCompany[selectedCompanyId]
+  ) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
   }
 
   if (flattenedTree.length === 0) {
-    return <div className="flex items-center justify-center min-h-screen">No results found</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        No results found
+      </div>
+    );
   }
 
   return (

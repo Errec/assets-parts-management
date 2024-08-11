@@ -85,13 +85,20 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
   }, [selectedIndex]);
 
   const getIcon = (item: Asset | Location) => {
-    if ('parentId' in item) return '📁';
     if ('sensorType' in item) {
-      if (item.sensorType === 'vibration') return '📳';
-      if (item.sensorType === 'energy') return '⚡';
-      return '🔌';
+      switch (item.sensorType) {
+        case 'vibration':
+          return '📳';
+        case 'energy':
+          return '⚡';
+        default:
+          return '🔌';
+      }
+    } else if ('locationId' in item) {
+      return '🔧';
+    } else {
+      return '📁';
     }
-    return '🔧';
   };
 
   return (
