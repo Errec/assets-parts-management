@@ -49,13 +49,15 @@ type TreeViewProps = {
   expandAll: boolean;
   filterOperating: boolean;
   filterCritical: boolean;
+  onAssetSelect: (asset: Asset | Location) => void; // New prop to handle asset selection
 };
 
-const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults, expandAll, filterOperating, filterCritical }) => {
+const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults, expandAll, filterOperating, filterCritical, onAssetSelect }) => {
   const { assetsByCompany, fetchAssets } = useAssetStore();
   const { locationsByCompany, fetchLocations } = useLocationStore();
   const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>({});
   const [flattenedTree, setFlattenedTree] = useState<any[]>([]);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null); // Track selected item
 
   useEffect(() => {
     if (selectedCompanyId) {
@@ -132,7 +134,6 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults, e
       const type = asset.sensorType ? 'component' : 'asset';
       expandedResults.push({ ...asset, level, type });
 
-      // Don't expand children by default
       const isOpen = openFolders[asset.id] || expandAll;
 
       assetsByCompany[selectedCompanyId!]
@@ -174,17 +175,23 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults, e
 
     searchResults.forEach(result => {
       if ('parentId' in result) {
-        // Add the location and traverse its children, collapsed by default
         expandedResults.push({ ...result, level: 0, type: 'location' });
         traverse(result.id, 1);
       } else {
-        // Add the asset and its children, collapsed by default
         addAssetAndChildren(result as Asset, 0);
       }
     });
 
     return expandedResults;
   }, [searchResults, assetsByCompany, locationsByCompany, selectedCompanyId, filterOperating, filterCritical, openFolders, expandAll]);
+
+  const handleNodeClick = useCallback(
+    (item: Asset | Location) => {
+      setSelectedItemId(item.id); // Mark item as selected
+      onAssetSelect(item); // Pass the selected item back to the parent component
+    },
+    [onAssetSelect]
+  );
 
   const Row = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
@@ -194,7 +201,7 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults, e
       const hasChildren = item.type === 'location' || item.type === 'asset';
 
       return (
-        <div style={style}>
+        <div style={style} onClick={() => handleNodeClick(item)} className={`${item.id === selectedItemId ? 'bg-blue-100' : ''}`}>
           <TreeNode
             name={item.name}
             type={item.type || (item.sensorType ? 'component' : 'asset')}
@@ -208,7 +215,7 @@ const TreeView: React.FC<TreeViewProps> = ({ selectedCompanyId, searchResults, e
         </div>
       );
     },
-    [flattenedTree, openFolders, toggleFolder]
+    [flattenedTree, openFolders, toggleFolder, selectedItemId, handleNodeClick]
   );
 
   if (!selectedCompanyId || !assetsByCompany[selectedCompanyId] || !locationsByCompany[selectedCompanyId]) {
