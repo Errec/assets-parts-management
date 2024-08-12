@@ -7,7 +7,7 @@ import { Asset, Location } from '../../types';
 import assetIconB from '../../assets/icons/asset-b.svg';
 import componentIconB from '../../assets/icons/component-b.png';
 import locationIconB from '../../assets/icons/location-b.svg';
-import searchIcon from '../../assets/icons/search.svg'; // Import the search icon
+import searchIcon from '../../assets/icons/search.svg';
 
 type TreeSearchProps = {
   selectedCompanyId: string | null;
@@ -22,6 +22,7 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
   const { locationsByCompany } = useLocationStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null); // Ref for the whole search container
 
   const performSearch = useCallback((term: string) => {
     if (term.length >= 3 && selectedCompanyId) {
@@ -65,9 +66,9 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
     } else {
       onSearch(previewResults, false);
     }
-    setSearchTerm('');
-    setPreviewResults([]);
-    inputRef.current?.blur();
+    setSearchTerm(''); // Clear the search term after submission
+    setPreviewResults([]); // Clear the preview when the search is made
+    inputRef.current?.focus(); // Keep focus on the input field after clicking search
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -88,8 +89,10 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
   };
 
   const handleClickOutside = useCallback((event: MouseEvent) => {
-    if (inputRef.current && !inputRef.current.contains(event.target as Node) &&
-        previewRef.current && !previewRef.current.contains(event.target as Node)) {
+    if (
+      searchContainerRef.current &&
+      !searchContainerRef.current.contains(event.target as Node)
+    ) {
       setSearchTerm('');
       setPreviewResults([]);
       setSelectedIndex(-1);
@@ -105,19 +108,16 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
 
   const getIcon = (item: Asset | Location) => {
     if ('sensorType' in item) {
-      // It's a component
       return componentIconB;
     } else if ('parentId' in item) {
-      // It's an asset
       return assetIconB;
     } else {
-      // It's a location
       return locationIconB;
     }
   };
 
   return (
-    <div className="mb-4 relative">
+    <div className="mb-4 relative" ref={searchContainerRef}>
       <div className="flex items-center relative">
         <input
           ref={inputRef}
@@ -126,11 +126,12 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full p-2 pl-3 pr-10 border border-tractian-gray-50 rounded" // Added padding for the icon
+          className="w-full p-2 pl-3 pr-10 border border-tractian-gray-50 rounded"
         />
         <button
+          type="button"
           onClick={handleSearchSubmit}
-          className="absolute right-6 w-4 h-4 flex items-center justify-center bg-transparent border-none cursor-pointer"
+          className="absolute right-2 w-6 h-6 flex items-center justify-center bg-transparent border-none cursor-pointer"
         >
           <img src={searchIcon} alt="Search" className="w-4 h-4" />
         </button>
