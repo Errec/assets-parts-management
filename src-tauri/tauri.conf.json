@@ -15,7 +15,7 @@
       "http": {
         "all": true,
         "request": true,
-        "scope": ["http://localhost", "https://fake-api.tractian.com/*" ]
+        "scope": ["http://localhost", "https://fake-api.tractian.com/*"]
       }
     },
     "bundle": {
@@ -57,7 +57,8 @@
         "height": 820,
         "resizable": false,
         "title": "Asset Management",
-        "width": 1260
+        "width": 1260,
+        "fileDropEnabled": false
       }
     ]
   }
