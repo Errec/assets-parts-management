@@ -59,3 +59,17 @@ The use of Tauri in this project allows for a minimal memory footprint and fast 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+## Video
+
+Application running on dev mode: [Video Here](https://drive.google.com/file/d/10PFl7qw_I2glCVoEf8j5GxqGKdvutm9E/view?usp=sharing)
+
+## TODO
+- Add more tests to finish full coverage
+- Splash screen
+- Toast to display possible errors
+- Code clean up - some
+- Docker environment for dev
+- Config CI/CD
+- Config save files for local install
+- Rectorate/split some components
