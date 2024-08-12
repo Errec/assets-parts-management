@@ -22,7 +22,7 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
   const { locationsByCompany } = useLocationStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
-  const searchContainerRef = useRef<HTMLDivElement>(null); // Ref for the whole search container
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const performSearch = useCallback((term: string) => {
     if (term.length >= 3 && selectedCompanyId) {
@@ -38,7 +38,7 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
 
       const results = [...filteredAssets, ...filteredLocations];
       setPreviewResults(results);
-      setSelectedIndex(-1); // Reset selected index on new search
+      setSelectedIndex(-1);
     } else {
       setPreviewResults([]);
     }
@@ -66,9 +66,9 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
     } else {
       onSearch(previewResults, false);
     }
-    setSearchTerm(''); // Clear the search term after submission
-    setPreviewResults([]); // Clear the preview when the search is made
-    inputRef.current?.focus(); // Keep focus on the input field after clicking search
+    setSearchTerm('');
+    setPreviewResults([]);
+    inputRef.current?.focus();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -107,9 +107,9 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
   }, [handleClickOutside]);
 
   const getIcon = (item: Asset | Location) => {
-    if ('sensorType' in item) {
+    if (item.hasOwnProperty('sensorType')) {
       return componentIconB;
-    } else if ('parentId' in item) {
+    } else if (item.hasOwnProperty('parentId')) {
       return assetIconB;
     } else {
       return locationIconB;

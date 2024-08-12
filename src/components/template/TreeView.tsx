@@ -4,7 +4,7 @@ import { useAssetStore } from '../../store/assetStore';
 import { useLocationStore } from '../../store/locationStore';
 import { Asset, Location } from '../../types';
 
-import arrowIcon from '../../assets/icons/arrow.svg'; // Import the arrow icon
+import arrowIcon from '../../assets/icons/arrow.svg';
 import assetIconB from '../../assets/icons/asset-b.svg';
 import assetIconW from '../../assets/icons/asset-w.svg';
 import componentIconB from '../../assets/icons/component-b.png';
@@ -24,7 +24,7 @@ type TreeNodeProps = {
   isOpen: boolean;
   level: number;
   isSelected: boolean;
-  status?: string | null; // Allow null for status
+  status?: string | null;
 };
 
 const TreeNode: React.FC<TreeNodeProps> = ({
@@ -52,15 +52,13 @@ const TreeNode: React.FC<TreeNodeProps> = ({
 
   const iconSrc = getIcon();
   const statusIconSrc = getStatusIcon();
-  const statusIconSize = status === 'operating' ? 'w-3 h-3' : 'w-2 h-2'; // 12px for operational, 8px for alert
+  const statusIconSize = status === 'operating' ? 'w-3 h-3' : 'w-2 h-2';
 
   return (
     <div
       onClick={onClick}
-      className={`cursor-pointer flex items-center ${
-        isSelected ? 'bg-tractian-blue-200 text-white' : ''
-      }`}
-      style={{ paddingLeft: `${level * 20 + 2}px` }} // Added extra 2px padding
+      className={`cursor-pointer flex items-center ${isSelected ? 'bg-tractian-blue-200 text-white' : ''}`}
+      style={{ paddingLeft: `${level * 20 + 2}px` }}
     >
       {hasChildren && (
         <img
@@ -83,7 +81,6 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   );
 };
 
-// Type guard to check if an object is of type Asset
 function isAsset(item: Asset | Location): item is Asset {
   return (item as Asset).sensorId !== undefined;
 }
@@ -112,8 +109,8 @@ const TreeView: React.FC<TreeViewProps> = ({
   const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>({});
   const [flattenedTree, setFlattenedTree] = useState<any[]>([]);
 
-  const containerHeight = 580; // Define the height of the container
-  const itemHeight = 30; // Define the height of each item
+  const containerHeight = 580;
+  const itemHeight = 30;
 
   useEffect(() => {
     if (selectedCompanyId) {
@@ -155,7 +152,6 @@ const TreeView: React.FC<TreeViewProps> = ({
     const flattened: any[] = [];
 
     const addAsset = (asset: Asset, level: number) => {
-      // Check if status is null and handle accordingly
       if (
         (filterOperating && asset.status !== 'operating' && asset.status !== null) ||
         (filterCritical && asset.status !== 'alert' && asset.status !== null)
@@ -172,19 +168,23 @@ const TreeView: React.FC<TreeViewProps> = ({
       }
     };
 
-    const traverse = (locationId: string | null = null, level = 0) => {
+    const traverse = (locationId: string | null = null, level = 0, depth = 0) => {
+      if (depth > 100) {
+        console.warn(`Max recursion depth reached for locationId: ${locationId}`);
+        return;
+      }
       locations
         .filter((location: Location) => location.parentId === locationId)
         .forEach((location: Location) => {
           flattened.push({ ...location, level, type: 'location' });
           if (openFolders[location.id] || expandAll) {
+            traverse(location.id, level + 1, depth + 1);
             assets
               .filter(
                 (asset: Asset) =>
                   asset.locationId === location.id && !asset.parentId
               )
               .forEach((asset: Asset) => addAsset(asset, level + 1));
-            traverse(location.id, level + 1);
           }
         });
     };
@@ -210,7 +210,6 @@ const TreeView: React.FC<TreeViewProps> = ({
     const expandedResults: any[] = [];
 
     const addAssetAndChildren = (asset: Asset, level: number) => {
-      // Check if status is null and handle accordingly
       if (
         (filterOperating && asset.status !== 'operating' && asset.status !== null) ||
         (filterCritical && asset.status !== 'alert' && asset.status !== null)
@@ -232,7 +231,11 @@ const TreeView: React.FC<TreeViewProps> = ({
         });
     };
 
-    const traverse = (locationId: string, level: number) => {
+    const traverse = (locationId: string, level: number, depth = 0) => {
+      if (depth > 100) {
+        console.warn(`Max recursion depth reached for locationId: ${locationId}`);
+        return;
+      }
       const locations: Location[] =
         locationsByCompany[selectedCompanyId!] || [];
       const assets: Asset[] = assetsByCompany[selectedCompanyId!] || [];
@@ -241,7 +244,9 @@ const TreeView: React.FC<TreeViewProps> = ({
         .filter((location) => location.parentId === locationId)
         .forEach((location) => {
           expandedResults.push({ ...location, level, type: 'location' });
-          traverse(location.id, level + 1);
+          if (openFolders[location.id] || expandAll) {
+            traverse(location.id, level + 1, depth + 1);
+          }
         });
 
       assets
@@ -253,7 +258,6 @@ const TreeView: React.FC<TreeViewProps> = ({
 
     searchResults.forEach((result) => {
       if (isAsset(result)) {
-        // Only process assets
         if (
           (filterOperating && result.status !== 'operating' && result.status !== null) ||
           (filterCritical && result.status !== 'alert' && result.status !== null)
@@ -263,7 +267,6 @@ const TreeView: React.FC<TreeViewProps> = ({
         expandedResults.push({ ...result, level: 0, type: 'component' });
         addAssetAndChildren(result as Asset, 0);
       } else {
-        // Process locations
         expandedResults.push({ ...result, level: 0, type: 'location' });
         traverse(result.id, 1);
       }
@@ -303,18 +306,12 @@ const TreeView: React.FC<TreeViewProps> = ({
             isOpen={!!openFolders[item.id]}
             level={item.level || 0}
             isSelected={selectedAsset ? selectedAsset.id === item.id : false}
-            status={isAsset(item) ? item.status : undefined} // Only pass status if it's an asset
+            status={isAsset(item) ? item.status : undefined}
           />
         </div>
       );
     },
-    [
-      flattenedTree,
-      openFolders,
-      toggleFolder,
-      onAssetSelect,
-      selectedAsset,
-    ]
+    [flattenedTree, openFolders, toggleFolder, onAssetSelect, selectedAsset]
   );
 
   if (
