@@ -13,7 +13,7 @@ const TreeLoading: React.FC<TreeLoadingProps> = ({ height, itemHeight }) => {
       {Array.from({ length: itemCount }).map((_, index) => (
         <li
           key={index}
-          className="w-full bg-gradient-to-r from-blue-100 to-blue-600 rounded animate-pulse"
+          className="w-full bg-gradient-to-r from-tractian-blue-50 to-tractian-blue-200 rounded animate-pulse"
           style={{ height: `${itemHeight}px` }}
         ></li>
       ))}

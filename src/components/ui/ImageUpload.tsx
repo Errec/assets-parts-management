@@ -28,7 +28,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, currentImage }
   return (
     <div
       {...getRootProps()}
-      className={`flex items-center justify-center w-full h-56 cursor-pointer ${preview ? '' : 'flex-col'}`}
+      className={`flex items-center justify-center w-full h-56 cursor-pointer ${preview ? '' : 'flex-col border border-dashed border-tractian-blue-200 rounded-lg bg-tractian-blue-50 bg-opacity-30'} mb-4`}
     >
       <input {...getInputProps()} />
       {preview ? (
@@ -36,7 +36,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, currentImage }
       ) : (
         <>
           <img src="/src/assets/icons/image-box.svg" alt="Add" className="w-8 h-8 mb-2" />
-          <p className="text-center text-blue-600 text-sm">Adicionar imagem do Ativo</p>
+          <p className="text-center text-tractian-blue-200 text-sm">Adicionar imagem do Ativo</p>
         </>
       )}
     </div>

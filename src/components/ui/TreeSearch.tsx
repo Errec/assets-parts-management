@@ -7,6 +7,7 @@ import { Asset, Location } from '../../types';
 import assetIconB from '../../assets/icons/asset-b.svg';
 import componentIconB from '../../assets/icons/component-b.png';
 import locationIconB from '../../assets/icons/location-b.svg';
+import searchIcon from '../../assets/icons/search.svg'; // Import the search icon
 
 type TreeSearchProps = {
   selectedCompanyId: string | null;
@@ -117,7 +118,7 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
 
   return (
     <div className="mb-4 relative">
-      <div className="flex items-center">
+      <div className="flex items-center relative">
         <input
           ref={inputRef}
           type="text"
@@ -125,23 +126,24 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full p-2 border border-gray-300 rounded"
+          className="w-full p-2 pl-3 pr-10 border border-tractian-gray-50 rounded" // Added padding for the icon
         />
-        <button 
-          onClick={handleSearchSubmit} 
-          className="p-2 bg-blue-500 text-white rounded ml-2">
-          🔍
+        <button
+          onClick={handleSearchSubmit}
+          className="absolute right-6 w-4 h-4 flex items-center justify-center bg-transparent border-none cursor-pointer"
+        >
+          <img src={searchIcon} alt="Search" className="w-4 h-4" />
         </button>
       </div>
       {previewResults.length > 0 && searchTerm.length >= 3 && (
         <div 
           ref={previewRef}
-          className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto"
+          className="absolute z-10 w-full mt-1 bg-white border border-tractian-gray-50 rounded shadow-lg max-h-60 overflow-y-auto"
         >
           {previewResults.map((item, index) => (
             <div
               key={item.id}
-              className={`p-2 hover:bg-gray-100 cursor-pointer flex items-center ${index === selectedIndex ? 'bg-gray-200' : ''}`}
+              className={`p-2 hover:bg-tractian-gray-50 cursor-pointer flex items-center ${index === selectedIndex ? 'bg-tractian-gray-50' : ''}`}
               onClick={() => {
                 onSearch([item], false);
                 setSearchTerm('');
@@ -155,7 +157,7 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
         </div>
       )}
       {searchTerm.length >= 3 && previewResults.length === 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg p-2">
+        <div className="absolute z-10 w-full mt-1 bg-white border border-tractian-gray-50 rounded shadow-lg p-2">
           No results found
         </div>
       )}
