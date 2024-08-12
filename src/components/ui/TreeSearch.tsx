@@ -107,9 +107,9 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ selectedCompanyId, onSearch }) 
   }, [handleClickOutside]);
 
   const getIcon = (item: Asset | Location) => {
-    if (item.hasOwnProperty('sensorType')) {
+    if ('sensorType' in item) {
       return componentIconB;
-    } else if (item.hasOwnProperty('parentId')) {
+    } else if ('locationId' in item) {
       return assetIconB;
     } else {
       return locationIconB;
