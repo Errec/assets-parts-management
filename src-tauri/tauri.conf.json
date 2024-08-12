@@ -60,6 +60,10 @@
         "width": 1260,
         "fileDropEnabled": false
       }
-    ]
+    ],
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    }
   }
 }
