@@ -24,7 +24,7 @@ type TreeNodeProps = {
   isOpen: boolean;
   level: number;
   isSelected: boolean;
-  status?: string;
+  status?: string | null; // Allow null for status
 };
 
 const TreeNode: React.FC<TreeNodeProps> = ({
@@ -82,6 +82,11 @@ const TreeNode: React.FC<TreeNodeProps> = ({
     </div>
   );
 };
+
+// Type guard to check if an object is of type Asset
+function isAsset(item: Asset | Location): item is Asset {
+  return (item as Asset).sensorId !== undefined;
+}
 
 type TreeViewProps = {
   selectedCompanyId: string | null;
@@ -150,11 +155,13 @@ const TreeView: React.FC<TreeViewProps> = ({
     const flattened: any[] = [];
 
     const addAsset = (asset: Asset, level: number) => {
+      // Check if status is null and handle accordingly
       if (
-        (filterOperating && asset.status !== 'operating') ||
-        (filterCritical && asset.status !== 'alert')
-      )
+        (filterOperating && asset.status !== 'operating' && asset.status !== null) ||
+        (filterCritical && asset.status !== 'alert' && asset.status !== null)
+      ) {
         return;
+      }
 
       const type = asset.sensorType ? 'component' : 'asset';
       flattened.push({ ...asset, level, type });
@@ -203,11 +210,13 @@ const TreeView: React.FC<TreeViewProps> = ({
     const expandedResults: any[] = [];
 
     const addAssetAndChildren = (asset: Asset, level: number) => {
+      // Check if status is null and handle accordingly
       if (
-        (filterOperating && asset.status !== 'operating') ||
-        (filterCritical && asset.status !== 'alert')
-      )
+        (filterOperating && asset.status !== 'operating' && asset.status !== null) ||
+        (filterCritical && asset.status !== 'alert' && asset.status !== null)
+      ) {
         return;
+      }
 
       const type = asset.sensorType ? 'component' : 'asset';
       expandedResults.push({ ...asset, level, type });
@@ -228,40 +237,35 @@ const TreeView: React.FC<TreeViewProps> = ({
         locationsByCompany[selectedCompanyId!] || [];
       const assets: Asset[] = assetsByCompany[selectedCompanyId!] || [];
 
-      const location = locations.find((loc) => loc.id === locationId);
-      if (location) {
-        expandedResults.push({ ...location, level, type: 'location' });
-      }
-
-      const isOpen = openFolders[locationId] || expandAll;
-
-      assets
-        .filter((asset: Asset) => asset.locationId === locationId && !asset.parentId)
-        .forEach((asset: Asset) => {
-          if (isOpen) {
-            addAssetAndChildren(asset, level + 1);
-          }
+      locations
+        .filter((location) => location.parentId === locationId)
+        .forEach((location) => {
+          expandedResults.push({ ...location, level, type: 'location' });
+          traverse(location.id, level + 1);
         });
 
-      locations
-        .filter((loc: Location) => loc.parentId === locationId)
-        .forEach((loc: Location) => {
-          if (isOpen) {
-            traverse(loc.id, level + 1);
-          }
+      assets
+        .filter((asset) => asset.locationId === locationId && !asset.parentId)
+        .forEach((asset) => {
+          addAssetAndChildren(asset, level + 1);
         });
     };
 
     searchResults.forEach((result) => {
-      if ('locationId' in result || 'parentId' in result) {
-        expandedResults.push({ ...result, level: 0, type: 'sensorType' in result ? 'component' : 'asset' });
-        if ('parentId' in result) {
-          traverse(result.id, 1);
-        } else {
-          addAssetAndChildren(result as Asset, 0);
+      if (isAsset(result)) {
+        // Only process assets
+        if (
+          (filterOperating && result.status !== 'operating' && result.status !== null) ||
+          (filterCritical && result.status !== 'alert' && result.status !== null)
+        ) {
+          return;
         }
+        expandedResults.push({ ...result, level: 0, type: 'component' });
+        addAssetAndChildren(result as Asset, 0);
       } else {
+        // Process locations
         expandedResults.push({ ...result, level: 0, type: 'location' });
+        traverse(result.id, 1);
       }
     });
 
@@ -290,14 +294,16 @@ const TreeView: React.FC<TreeViewProps> = ({
             name={item.name}
             type={item.type || ('sensorType' in item ? 'component' : 'asset')}
             onClick={() => {
-              toggleFolder(item.id);
+              if (hasChildren) {
+                toggleFolder(item.id);
+              }
               onAssetSelect(item);
             }}
             hasChildren={hasChildren}
             isOpen={!!openFolders[item.id]}
             level={item.level || 0}
             isSelected={selectedAsset ? selectedAsset.id === item.id : false}
-            status={item.status}
+            status={isAsset(item) ? item.status : undefined} // Only pass status if it's an asset
           />
         </div>
       );
