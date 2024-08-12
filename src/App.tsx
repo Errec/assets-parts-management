@@ -1,38 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import './App.css';
+import Container from './components/page/Container';
 import Header from './components/template/Header';
-import TreeView from './components/template/TreeView';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import { useCompanyStore } from './store/companyStore';
 
 const queryClient = new QueryClient();
 
-const LoadingSpinner: React.FC = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full" role="status">
-      <span className="visually-hidden">Loading...</span>
-    </div>
-  </div>
-);
-
-const App: React.FC = () => {
-  const { fetchCompanies, companies, loading, error } = useCompanyStore();
-  const [selectedCompanyName, setSelectedCompanyName] = useState<string | null>(null);
+const useCompanySelection = () => {
+  const { fetchCompanies, error } = useCompanyStore();
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchCompanies();
   }, [fetchCompanies]);
 
-  useEffect(() => {
-    if (companies.length > 0 && !selectedCompanyName) {
-      setSelectedCompanyName(companies[0].id); // Automatically select the first company
-    }
-  }, [companies, selectedCompanyName]);
+  const handleClearSearch = () => setSearchTerm('');
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+  return {
+    selectedCompanyId,
+    setSelectedCompanyId,
+    searchTerm,
+    handleClearSearch,
+    error,
+  };
+};
+
+const App: React.FC = () => {
+  const {
+    selectedCompanyId,
+    setSelectedCompanyId,
+    handleClearSearch,
+    error,
+  } = useCompanySelection();
 
   if (error) {
     return <div>Error: {error}</div>;
@@ -41,12 +43,18 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <Header onSelectCompany={setSelectedCompanyName} selectedCompanyId={selectedCompanyName} />
-        <main className="p-4">
-          {selectedCompanyName ? (
-            <TreeView companyId={selectedCompanyName} />
+        <Header 
+          onSelectCompany={setSelectedCompanyId}
+          selectedCompanyId={selectedCompanyId} 
+          onClearSearch={handleClearSearch}
+        />
+        <main className={`p-4 w-full flex items-center justify-center min-h-screen ${!selectedCompanyId ? 'pointer-events-none' : ''}`}>
+          {selectedCompanyId ? (
+            <Container selectedCompanyId={selectedCompanyId} />
           ) : (
-            <p>{companies.length > 0 ? companies[0].name : 'No companies available'}</p>
+            <div className="p-4 bg-tractian-blue-200 text-center border-2 rounded-lg">
+              <p className="text-tractian-blue-50 text-2xl font-bold">Select the Unit</p>
+            </div>
           )}
         </main>
       </ErrorBoundary>

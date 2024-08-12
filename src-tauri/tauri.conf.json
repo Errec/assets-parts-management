@@ -15,7 +15,7 @@
       "http": {
         "all": true,
         "request": true,
-        "scope": ["http://localhost", "https://fake-api.tractian.com/*" ]
+        "scope": ["http://localhost", "https://fake-api.tractian.com/*"]
       }
     },
     "bundle": {
@@ -54,11 +54,16 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
-        "resizable": true,
+        "height": 820,
+        "resizable": false,
         "title": "Asset Management",
-        "width": 800
+        "width": 1260,
+        "fileDropEnabled": false
       }
-    ]
+    ],
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    }
   }
 }

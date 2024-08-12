@@ -9,13 +9,16 @@ export default {
         colors: {
           'tractian': {
             'blue': {
+                50: '#d8dfe6',
                 100: '#55A6FF',
                 200: '#2188FF',
                 300: '#023B78',
                 400: '#17192D',
             },
-            'tractian-green':'#52C41A',
-            'tractian-red':'#ED3833',
+            'green':'#52C41A',
+            'red':'#ED3833',
+            'gray-50': '#E3EAEF',
+            'gray-100': '#88929C',
           },
       },
     },

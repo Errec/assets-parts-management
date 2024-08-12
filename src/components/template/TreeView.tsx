@@ -1,112 +1,116 @@
-import React, { useEffect, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { FixedSizeList as List } from 'react-window';
 import { useAssetStore } from '../../store/assetStore';
-import { Asset, Location } from '../../types';
+import { useLocationStore } from '../../store/locationStore';
+import { TreeViewProps } from '../../types';
+import { flattenSearchResults } from '../../utils/flattenSearchResults';
+import { flattenTree } from '../../utils/flattenTree';
+import { toggleFolder } from '../../utils/toggleFolder';
+import TreeViewRow from '../ui/TreeViewRow';
 
-interface TreeNodeProps {
-  name: string;
-  isFolder: boolean;
-  isOpen: boolean;
-  onClick: () => void;
-  children?: React.ReactNode;
-  hasChildren: boolean;
-}
+const TreeLoading = lazy(() => import('../ui/TreeLoading'));
 
-const TreeNode: React.FC<TreeNodeProps> = ({ name, isFolder, isOpen, onClick, children, hasChildren }) => {
-  return (
-    <div className="ml-4">
-      <div onClick={onClick} className={`cursor-pointer flex items-center ${hasChildren ? '' : 'pl-5'}`}>
-        {isFolder && hasChildren ? (
-          isOpen ? (
-            <span>&#9660;</span> // Arrow down
-          ) : (
-            <span>&#9654;</span> // Arrow right
-          )
-        ) : (
-          <span>&#8226;</span> // Dot
-        )}
-        <span className="ml-2">{name}</span>
-      </div>
-      {isOpen && <div className="ml-4">{children}</div>}
-    </div>
-  );
-};
-
-interface TreeViewProps {
-  companyId: string;
-}
-
-const TreeView: React.FC<TreeViewProps> = ({ companyId }) => {
-  const { assetsByCompany, locationsByCompany, fetchAssetsAndLocations, loading } = useAssetStore();
+const TreeView: React.FC<TreeViewProps> = ({
+  selectedCompanyId,
+  searchResults,
+  expandAll,
+  filterOperating,
+  filterCritical,
+  selectedAsset,
+  onAssetSelect,
+}) => {
+  const { assetsByCompany, fetchAssets } = useAssetStore();
+  const { locationsByCompany, fetchLocations } = useLocationStore();
   const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>({});
+  const [flattenedTree, setFlattenedTree] = useState<any[]>([]);
+
+  const containerHeight = 580;
+  const itemHeight = 30;
 
   useEffect(() => {
-    fetchAssetsAndLocations(companyId);
-  }, [companyId, fetchAssetsAndLocations]);
+    if (selectedCompanyId) {
+      fetchAssets(selectedCompanyId);
+      fetchLocations(selectedCompanyId);
+    }
+  }, [selectedCompanyId, fetchAssets, fetchLocations]);
 
-  const toggleFolder = (id: string) => {
-    setOpenFolders((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  useEffect(() => {
+    if (
+      selectedCompanyId &&
+      assetsByCompany[selectedCompanyId] &&
+      locationsByCompany[selectedCompanyId]
+    ) {
+      const flattened =
+        searchResults.length > 0 ? flattenSearchResults({
+          searchResults, 
+          assetsByCompany, 
+          locationsByCompany, 
+          selectedCompanyId, 
+          openFolders, 
+          expandAll, 
+          filterOperating, 
+          filterCritical 
+        }) : flattenTree({
+          assetsByCompany, 
+          locationsByCompany, 
+          selectedCompanyId, 
+          openFolders, 
+          expandAll, 
+          filterOperating, 
+          filterCritical 
+        });
+      setFlattenedTree(flattened);
+    }
+  }, [
+    assetsByCompany,
+    locationsByCompany,
+    selectedCompanyId,
+    openFolders,
+    searchResults,
+    expandAll,
+    filterOperating,
+    filterCritical,
+  ]);
 
-  const renderTree = (locationId: string | null = null) => {
-    const locations = locationsByCompany[companyId];
-    const assets = assetsByCompany[companyId];
+  const handleToggleFolder = useCallback((id: string) => {
+    toggleFolder(id, setOpenFolders);
+  }, []);
 
-    return locations?.filter((location) => location.parentId === locationId).map((location) => {
-      const childAssets = assets?.filter((asset) => asset.locationId === location.id && !asset.parentId);
-      const hasChildren = childAssets?.length > 0 || locations?.some(l => l.parentId === location.id);
-
-      return (
-        <TreeNode
-          key={location.id}
-          name={location.name}
-          isFolder={true}
-          isOpen={!!openFolders[location.id]}
-          onClick={() => toggleFolder(location.id)}
-          hasChildren={hasChildren}
-        >
-          {childAssets?.map((asset) => (
-            <TreeNode
-              key={asset.id}
-              name={asset.name}
-              isFolder={assets.some(subAsset => subAsset.parentId === asset.id)}
-              isOpen={!!openFolders[asset.id]}
-              onClick={() => toggleFolder(asset.id)}
-              hasChildren={assets.some(subAsset => subAsset.parentId === asset.id)}
-            >
-              {assets?.filter((subAsset) => subAsset.parentId === asset.id).map((subAsset) => (
-                <TreeNode
-                  key={subAsset.id}
-                  name={subAsset.name}
-                  isFolder={assets.some(component => component.parentId === subAsset.id)}
-                  isOpen={!!openFolders[subAsset.id]}
-                  onClick={() => toggleFolder(subAsset.id)}
-                  hasChildren={assets.some(component => component.parentId === subAsset.id)}
-                >
-                  {assets?.filter((component) => component.parentId === subAsset.id).map((component) => (
-                    <TreeNode
-                      key={component.id}
-                      name={component.name}
-                      isFolder={false}
-                      isOpen={false}
-                      onClick={() => {}}
-                      hasChildren={false}
-                    />
-                  ))}
-                </TreeNode>
-              ))}
-            </TreeNode>
-          ))}
-          {renderTree(location.id)}
-        </TreeNode>
-      );
-    });
-  };
-
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  if (
+    !selectedCompanyId ||
+    !assetsByCompany[selectedCompanyId] ||
+    !locationsByCompany[selectedCompanyId]
+  ) {
+    return (
+      <Suspense fallback={<div>Loading...</div>}>
+        <TreeLoading height={containerHeight} itemHeight={itemHeight} />
+      </Suspense>
+    );
   }
 
-  return <div>{renderTree()}</div>;
+  if (flattenedTree.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        No results found
+      </div>
+    );
+  }
+
+  return (
+    <List height={containerHeight} itemCount={flattenedTree.length} itemSize={itemHeight} width="100%">
+      {({ index, style }) => (
+        <TreeViewRow
+          style={style}
+          index={index}
+          flattenedTree={flattenedTree}
+          openFolders={openFolders}
+          onAssetSelect={onAssetSelect}
+          toggleFolder={handleToggleFolder}
+          selectedAsset={selectedAsset}
+        />
+      )}
+    </List>
+  );
 };
 
 export default TreeView;
